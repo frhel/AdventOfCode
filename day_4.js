@@ -26,15 +26,17 @@ function solveParts(schedule) {
         let [left, right] = getNumberArraysFromScheduleString(schedule[i]);
         
         // Increment the accumulator for Part 1 if one schedule is
-        // fully contained by the other. **See explanation below
+        // fully contained by the other.
         part1Solution += setFullyContainsOtherSet(left, right);
         // Increment the accumulator for Part 2 if one schedule is
-        // partially contained by the other. **See explanation below
+        // partially contained by the other.
         part2Solution += setPartiallyContainsOtherSet(left, right);
         
-        /* ** We can use the function return values directly as iterator values
-           because the return values are boolean that become implicitly
-           converted to 0 or 1 when used as an iterator value. */
+        /* 
+            ** We can use the function return values directly as iterator values
+            because the return values are boolean(TRUE or FALSE) that become 
+            implicitly converted to 0 or 1 when used as iterator values. 
+        */
     }
 }
 
