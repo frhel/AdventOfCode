@@ -12,20 +12,20 @@ let instructions = input.splice(input.indexOf('')+1);
 
 // ----------------------------------------------------------------------------------
 // Build the solution for part 1
-let part1Stacks = moveItems(stacksInput, instructions);
-let part_1_solution = buildSolution(part1Stacks);
+let part1SolutionStacks = moveItems(stacksInput, instructions);
+let part_1_solution = buildSolutionString(part1Stacks);
 console.log(`Part 1 solution: ${part_1_solution}`);
 
 // ----------------------------------------------------------------------------------
 // Build the solution for part 2
 let part2Stacks = moveItems(stacksInput, instructions, true);
-let part_2_solution = buildSolution(part2Stacks);
+let part_2_solution = buildSolutionString(part2Stacks);
 console.log(`Part 2 solution: ${part_2_solution}`);
 
 
 // ----------------------------------------------------------------------------------
-// fn: buildPart1Answer() builds the solution string
-function buildSolution(stacks) {
+// fn: buildSolutionString() builds the solution string
+function buildSolutionString(stacks) {
     // Destructure the stacks map into an array of stacks and then pop the last element
     // off each stack with the .map() method. Finish off by joining the values of the
     // resulting array to build and return the solution string.
@@ -41,7 +41,7 @@ function moveItems(stacks, instructions, preserveOrder = false) {
     // Start by converting the stacks input into a map of actual stacks that we can
     // manipulate and return at the end of the function.
     stacks = buildStacksMap(stacks);
-    
+
     // Iterate over the instructions
     for (let i = 0; i < instructions.length; i++) {
         // Extract the instruction by splitting on the space
