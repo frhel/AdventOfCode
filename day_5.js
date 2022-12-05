@@ -13,13 +13,13 @@ let instructions = input.splice(input.indexOf('')+1);
 // ----------------------------------------------------------------------------------
 // Build the solution for part 1
 let part1SolutionStacks = moveItems(stacksInput, instructions);
-let part_1_solution = buildSolutionString(part1Stacks);
+let part_1_solution = buildSolutionString(part1SolutionStacks);
 console.log(`Part 1 solution: ${part_1_solution}`);
 
 // ----------------------------------------------------------------------------------
 // Build the solution for part 2
-let part2Stacks = moveItems(stacksInput, instructions, true);
-let part_2_solution = buildSolutionString(part2Stacks);
+let part2SolutionStacks = moveItems(stacksInput, instructions, true);
+let part_2_solution = buildSolutionString(part2SolutionStacks);
 console.log(`Part 2 solution: ${part_2_solution}`);
 
 
