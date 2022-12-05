@@ -4,10 +4,10 @@ const input = fs.readFileSync('./data/day_5', 'utf8').split('\r\n');
 
 // Extract the initial stack of instructions by splitting the input on the empty line.
 // We can skip the numbering of the stacks as we can just infer the number of stacks
-// from the the number of items in a row of the input.
+// from the the number of items per row of input.
 let stacksInput = input.splice(0, input.indexOf('')-1);
 
-// Extract the instructions from the input using the same method
+// Extract the instructions from the input using the same method as above
 let instructions = input.splice(input.indexOf('')+1);
 
 // ----------------------------------------------------------------------------------
