@@ -123,9 +123,10 @@ function buildStacksMap(stacksInput) {
             let item = line.substr(1, 1);
 
             // We already saved the current item to a variable, so we can remove it from the string
-            // by using the substring method again, but this time we use the length of the item(3)
-            // as well as the length of the whitespace separator(1) to discard the part of the string
-            // we have no further use for.
+            // by using the substring method again, but this time we use the length of the item(1) 
+            // plus the surrounding brackets(2) as well as the length of the whitespace(1) that is used
+            // to separate items of each row. This will yeet the part of the string we have already
+            // processed so we can work from the start of the string again in the next iteration of the loop.
             line = line.slice(4);
 
             // Check if the input is empty. Move on to the next stack if it is.
