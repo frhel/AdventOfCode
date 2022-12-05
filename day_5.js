@@ -114,8 +114,8 @@ function buildStacksMap(stacksInput) {
         // during the loop where we process the row of items to push onto each stack
         let stackNumber = 1;
 
-        // Now we will chop the string up into individual items until the string is empty
-        // and push each item onto its relevant stack
+        // Now we will chop the current row's string representation up into individual 
+        // items and push them onto their respective stacks until the string is empty
         while (line.length > 0) {
             // We know each item is 1 characters long, with 1 bracket on each side, so we can use
             // the substr() method to get the 2nd character of the string and push it onto the 
