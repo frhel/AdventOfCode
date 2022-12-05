@@ -91,8 +91,8 @@ function moveItems(stacks, instructions, preserveOrder = false) {
 // ----------------------------------------------------------------------------
 // fn: buildStacksMap() converts the stacks input into a numbered map of stacks
 function buildStacksMap(stacksInput) {
-    // We can use a map to store the stacks to be able to access them
-    // directly by the stack name, or number in this case.
+    // We can use a map to store the stacks so we are able to access them
+    // directly by stack name, or number in this case.
     let stacks = new Map();
 
     /*
