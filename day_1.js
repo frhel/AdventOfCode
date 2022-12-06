@@ -1,26 +1,47 @@
-// Read in the contents of the data file
 const fs = require('fs');
+// Read in the contents of the data file and store it as an array of strings
+// where each string is obtained by splitting the input string on the newline character
 const input = fs.readFileSync('./data/day_1', 'utf8').split('\r\n');
 
-// Number the elves and map them to their Calorie sums
-let elfSums = new Map();
-let currElf = 1;
-// Iterate through the input data and sum the calories for each elf
-for (let i = 0; i < input.length; i++) {
-    if (input[i] === '') currElf++
-    else elfSums.set(currElf, elfSums.get(currElf) + parseInt(input[i]) || parseInt(input[i]));
+// Map elves with their calorie sums
+let elfSums = generateElfCalorieSums(input);
+
+// ---------------------------------------------------------------------------------------------
+// The answer to part 1
+console.log(`The answer to part 1 is: ${solve(elfSums, 1)}`);
+
+// ---------------------------------------------------------------------------------------------
+// The answer to part 2
+console.log(`The answer to part 2 is: ${solve(elfSums, 3)}`);
+
+// ---------------------------------------------------------------------------------------------
+// fn: Solve challenge with variable number of elves
+function solve(sumsMap, numberOfElves) {
+    // Sort the elves by their calorie sums in descending order
+    let relevantElves = [...sumsMap.entries()]
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, numberOfElves) // Return only the specified number of elves
+
+    // Sum the calories of the relevant elves and return the result
+    return relevantElves.reduce((a, b) => a + b[1], 0);
 }
 
-// Sort the elves by their calorie sums in descending order
-elfSums = [...elfSums.entries()].sort((a, b) => b[1] - a[1]);
+// ---------------------------------------------------------------------------------------------
+// fn: Generate a map of calorie sums for each elf
+function generateElfCalorieSums(input) {
+    let elfSums = new Map();
+    // Number the elves and map them to their Calorie sums
+    let currElf = 1;
 
-// The answer to part 1
-console.log(elfSums[0][1]);
+    // Iterate through the input data and sum the calories for each elf
+    for (let i = 0; i < input.length; i++) {
+        // If the input is an empty string, this marks the end of the current elf's data
+        // so increment the elf number and move on to the next elf
+        if (input[i] === '') currElf++
 
-// Extract the first 3 elves
-let top3Elves = elfSums.slice(0, 3);
-// Sum the calories of the top 3 elves
-let top3ElvesCalories = top3Elves.reduce((a, b) => a + b[1], 0);
-
-// The answer to part 2
-console.log(top3ElvesCalories);
+        // If the elf is not in the map, add them and set their calorie sum to the current input
+        // Otherwise, add the current input to the elf's calorie sum
+        else elfSums.set(currElf, elfSums.get(currElf) + Number(input[i]) || Number(input[i]));
+    }
+    return elfSums;
+}
