@@ -30,6 +30,7 @@ function findInputMarker(input, marker_length) {
             .add(input[i]);     
         i++;
     }
+    
     // Return the index of the first character after the marker. We get this by always incrementing
     // the iterator at the end of the loop, after the marker has been found.
     return i;
