@@ -9,7 +9,7 @@ use std::collections::HashMap;
 /// and the sum of the top 3 elves as a solution for part 2.
 /// 
 /// # Arguments
-/// * `file` - A file object
+/// * None
 /// 
 /// # Returns
 /// * None
