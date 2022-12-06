@@ -15,11 +15,12 @@ console.log(`Part 2, start of message: ${findInputMarker(input, part2_marker_len
 // ---------------------------------------------------------------------------------------------
 // fn: findInputMarker() - find the input marker of a given length
 function findInputMarker(input, marker_length) {
-    // Use a set to track unique characters in the input.  If the set size is equal to the marker
-    // length, then we have found the start of the packet.
+    // Use a set to track unique characters in the input.
     let hash = new Set();
     // Iterator to track the current position in the input string
     let i = 0;
+
+    // Loop until the set contains the marker length or we reach the end of the input string
     while (hash.size < marker_length && i < input.length) {
         // Call purgeNonContiguousValuesFromSet(); to remove characters from the set based on the
         // current character in the input string.  This will ensure that the set only contains
