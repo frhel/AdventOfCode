@@ -1,5 +1,7 @@
-// Read in the contents of the data file
 const fs = require('fs');
+
+// Read in the contents of the data file and store it as an array of strings
+// where each string is obtained by splitting the input string on the newline character
 const input = fs.readFileSync('./data/day_5', 'utf8').split('\r\n');
 
 // Extract the initial stack of instructions by splitting the input on the empty line.
@@ -12,32 +14,18 @@ let instructions = input.splice(input.indexOf('')+1);
 
 // ----------------------------------------------------------------------------------
 // Build the solution for part 1
-let part1SolutionStacks = moveItems(stacksInput, instructions);
-let part_1_solution = buildSolutionString(part1SolutionStacks);
-console.log(`Part 1 solution: ${part_1_solution}`);
+console.log(`Part 1 solution: ${solve(stacksInput, instructions)}`);
 
 // ----------------------------------------------------------------------------------
 // Build the solution for part 2
-let part2SolutionStacks = moveItems(stacksInput, instructions, true);
-let part_2_solution = buildSolutionString(part2SolutionStacks);
-console.log(`Part 2 solution: ${part_2_solution}`);
-
+console.log(`Part 2 solution: ${solve(stacksInput, instructions, true)}`);
 
 // ----------------------------------------------------------------------------------
-// fn: buildSolutionString() builds the solution string
-function buildSolutionString(stacks) {
-    // Destructure the stacks map into an array of stacks and then pop the last element
-    // off each stack with the .map() method. Finish off by joining the values of the
-    // resulting array to build and return the solution string.
-    return [...stacks.values()].map(stack => stack.pop()).join('');
-}
-
-// ----------------------------------------------------------------------------------
-// fn: moveItems() moves the items between stacks according to the given instructions
-//     and returns the mutated stacks map. We have a preserveOrder parameter to allow
-//     us to move the items between stacks with either a first in first out or last in
-//     first out approach.
-function moveItems(stacks, instructions, preserveOrder = false) {
+// fn: solve() moves the items between stacks according to the given instructions
+//     and returns the solution based on the mutated stacks.
+//     We have a preserveOrder parameter to allow us to move the items between stacks 
+//     with either a first-in-first-out or last-in-first-out approach.
+function solve(stacks, instructions, preserveOrder = false) {
     // Start by converting the stacks input into a map of actual stacks that we can
     // manipulate and return at the end of the function.
     stacks = buildStacksMap(stacks);
@@ -84,8 +72,19 @@ function moveItems(stacks, instructions, preserveOrder = false) {
             moving the items between stacks, as we can just push the value of the result of the
             pop() method onto the target stack directly.
         */
-       }
-    return stacks;
+    }
+
+    // Return the solution string
+    return buildSolutionString(stacks);
+}
+
+// ----------------------------------------------------------------------------------
+// fn: buildSolutionString() builds the solution string
+function buildSolutionString(stacks) {
+    // Destructure the stacks map into an array of stacks and then pop the last element
+    // off each stack with the .map() method. Finish off by joining the values of the
+    // resulting array to build and return the solution string.
+    return [...stacks.values()].map(stack => stack.pop()).join('');
 }
 
 // ----------------------------------------------------------------------------
@@ -133,11 +132,14 @@ function buildStacksMap(stacksInput) {
             if (item !== ' ') {
                 // Get the current stack from the map, or create a new one if it doesn't exist
                 let stack = stacks.get(stackNumber) || [];
+
                 // Push the item onto the stack
                 stack.push(item);
+                
                 // Save the stack back to the map  
                 stacks.set(stackNumber, stack);
             }
+
             // The counter is only here to keep track of which stack we're on
             // so we will increment it no matter if the item is empty or not
             stackNumber++; 
