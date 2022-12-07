@@ -4,6 +4,10 @@ const fs = require('fs');
 // where each string is obtained by splitting the input string on the newline character
 const input = fs.readFileSync('./data/day_5', 'utf8').split('\r\n');
 
+// ------------------------------------------------------------------------------------------------
+// Problem description: https://adventofcode.com/2022/day/5
+// ------------------------------------------------------------------------------------------------
+
 // Extract the initial stack of instructions by splitting the input on the empty line.
 // We can skip the numbering of the stacks as we can just infer the number of stacks
 // from the the number of items per row of input.
