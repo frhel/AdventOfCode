@@ -3,6 +3,10 @@ const fs = require('fs');
 // where each string is obtained by splitting the input string on the newline character
 const input = fs.readFileSync('./data/day_4', 'utf8').split('\r\n');
 
+// ------------------------------------------------------------------------------------------------
+// Problem description: https://adventofcode.com/2022/day/4
+// ------------------------------------------------------------------------------------------------
+
 // --------------------------------------------------------------------------------------------
 // Enter the main loop to solve both parts at the same time
 let [part1, part2] = solveParts(input);
