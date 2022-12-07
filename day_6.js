@@ -2,6 +2,10 @@ const fs = require('fs');
 // Read in the contents of the data file and store it as a string
 let input = fs.readFileSync('./data/day_6', 'utf8')
 
+// ------------------------------------------------------------------------------------------------
+// Problem description: https://adventofcode.com/2022/day/6
+// ------------------------------------------------------------------------------------------------
+
 // ---------------------------------------------------------------------------------------------
 // Part 1 solution
 let part1_marker_length = 4;
