@@ -3,6 +3,10 @@ const fs = require('fs');
 // where each string is obtained by splitting the input string on the newline character
 const input = fs.readFileSync('./data/day_1', 'utf8').split('\r\n');
 
+// ------------------------------------------------------------------------------------------------
+// Problem description: https://adventofcode.com/2022/day/1
+// ------------------------------------------------------------------------------------------------
+
 // Map elves with their calorie sums
 let elfSums = generateElfCalorieSums(input);
 
