@@ -3,6 +3,10 @@ const fs = require('fs');
 // where each string is obtained by splitting the input string on the newline character
 const input = fs.readFileSync('./data/day_2', 'utf8').split('\r\n');
 
+// ------------------------------------------------------------------------------------------------
+// Problem description: https://adventofcode.com/2022/day/2
+// ------------------------------------------------------------------------------------------------
+
 // Define the scoring to a map for easy access
 const scoreGuide = new Map([
     ['X', 1],['Y', 2],['Z', 3],
