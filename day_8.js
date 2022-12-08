@@ -15,8 +15,8 @@ const input = fs.readFileSync('./data/day_8', 'utf8').split('\r\n').reverse();
 const grid = input.map((line) => line.split('').map((char) => parseInt(char)));
 // Define the edge bounds of the grid
 const bounds = new Map([
-    ['row', [0, grid[0].length - 1]],
-    ['col', [0, grid.length - 1]]
+    ['row', [0, grid.length - 1]],
+    ['col', [0, grid[0].length - 1]]
 ]);
 // Count the number of trees on the edges of the grid
 const edge_tree_count = [...bounds.values()].reduce((acc, val) => acc + val[1] * 2, 0);
@@ -134,11 +134,24 @@ function calc_direction_score(row_iter, col_iter, [row, col]) {
 // # Returns
 // Set of coordinates for visible trees
 function find_visible_trees() {
+    // Save the coordinates of the visible trees in a new Set
     let trees = new Set();
+    
+    // Initialize the minimum height of the trees in each column to the height of the first tree in
+    // each column. This is used to check if the current tree is taller than trees we have already
+    // seen in the column
+    let col_min = grid[0];
+
     for (let row = 1; row < grid.length - 1; row++) {
+        // Initialize the minimum height of the trees in each row to the height of the first tree in
+        // each row. This is used to check if the current tree is taller than trees we have already
+        // seen in the row
+        let row_min = grid[row][0];
+
         for (let col = 1; col < grid[0].length - 1; col++) {
             // Start by only checking the size of the tree against the trees on the edges of the grid
-            let edge_visibility = check_border([row, col]);
+            let edge_visibility = new Map();
+            [edge_visibility, row_min, col_min] = check_border([row, col], row_min, col_min);
 
             // Feed the results of the edge check into the tree_visibility function to process the
             // visibility of the tree within the grid. 
@@ -152,6 +165,33 @@ function find_visible_trees() {
     return trees;
 }
 
+// fn check_border([row, col]): Map ---------------------------------------------------------------
+//
+// # Description
+// The function checks the visibility of the tree at the coordinates specified by the [row, col]
+// parameter against the trees on the edges of the grid. It returns a map of the potential 
+// visibility of the tree from each edge.
+function check_border([row, col], row_min, col_min) {
+    // Create a map with the directions in the grid as keys and the visibility of the tree against
+    // the trees on the edges of the grid as values
+    // 0 = not visible,
+    // -1 or 1 = direction to iterate through the grid to check the visibility of the tree later
+    let results = new Map([['left', 0],['right', 0],['up', 0],['down', 0]]);
+    let curr = grid[row][col];
+
+    // Iterate through the bounds map and check the visibility of the tree against the trees on the
+    // edges of the grid.
+    for (let [key, [_,max]] of bounds) {
+        if (key === 'row') {
+            if (curr > row_min) results.set('left', -1), row_min = curr;
+            if (curr > grid[row][max]) results.set('right', 1);
+        } else {
+            if (curr > col_min[col]) results.set('down', -1), col_min[col] = curr;
+            if (curr > grid[max][col]) results.set('up', 1);
+        }
+    }
+    return [results, row_min, col_min];
+}
 
 // fn tree_visibility(edge_visibility, [row, col], visible = false): bool -------------------------
 // 
@@ -171,14 +211,15 @@ function tree_visibility(edge_visibility, [row, col]) {
     for (let [key, value] of edge_visibility) {
         // If the tree is not visible from the current edge, skip to the next edge
         if (value === 0) continue;
-        
+
         // If the tree is visible from the current edge, set the row and column iterators to the 
         // value of the edge visibility(1 or -1) and set the visibility to true
         let [row_iter, col_iter] = [0, 0];
-        if (key === 'left' || key === 'right')
-            row_iter = value;
-        else if (key === 'up' || key === 'down')
+        if (key === 'left' || key === 'down') return true;
+        if (key === 'right')
             col_iter = value;
+        else if (key === 'up')
+            row_iter = value;
 
         // Check the visibility of the tree in the direction of the edge.
         // If the tree is visible from the edge, return true
@@ -220,35 +261,6 @@ function crawl_direction(row_iter, col_iter, [row, col]) {
         if (grid[row][col] >= curr) return false;
     }
     return true;
-}
-
-
-// fn check_border([row, col]): Map ---------------------------------------------------------------
-//
-// # Description
-// The function checks the visibility of the tree at the coordinates specified by the [row, col]
-// parameter against the trees on the edges of the grid. It returns a map of the potential 
-// visibility of the tree from each edge.
-function check_border([row, col]) {
-    // Create a map with the directions in the grid as keys and the visibility of the tree against
-    // the trees on the edges of the grid as values
-    // 0 = not visible,
-    // -1 or 1 = direction to iterate through the grid to check the visibility of the tree later
-    let results = new Map([['left', 0],['right', 0],['up', 0],['down', 0]]);
-    let curr = grid[row][col];
-
-    // Iterate through the bounds map and check the visibility of the tree against the trees on the
-    // edges of the grid.
-    for (let [key, [min,max]] of bounds) {
-        if (key === 'col') {
-            if (grid[row][min] < curr) results.set('up', -1);
-            if (grid[row][max] < curr) results.set('down', 1);
-        } else if (key === 'row') {
-            if (grid[min][col] < curr) results.set('left', -1);
-            if (grid[max][col] < curr) results.set('right', 1);
-        }
-    }
-    return results;
 }
 
 
