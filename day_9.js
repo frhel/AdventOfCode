@@ -61,16 +61,16 @@ function log_tail_moves(chain_size, instructions = MOVES) {
 // to the link_pos_history array.
 function move_link(link_pos_history, move) {
     let [hx, hy] = move; // The current head position (the last move in the instructions)
-    let [tx, ty] = link_pos_history.at(-1); // The last known position of the link
+    let [lx, ly] = link_pos_history.at(-1); // The last known position of the link
 
     // If the link is more than 1 unit in any direction away from the head, move it 1 unit
     // in the direction of the head(2 units if the link is diagonal from where it needs to move)
-    if (Math.abs(hx - tx) > 1 || Math.abs(hy - ty) > 1) {
-        if (hx !== tx)
-            tx += (hx > tx) ? 1 : -1;
-        if (hy !== ty)
-            ty += (hy > ty) ? 1 : -1;
-        link_pos_history.push([tx, ty]); 
+    if (Math.abs(hx - lx) > 1 || Math.abs(hy - ly) > 1) {
+        if (hx !== lx)
+            lx += (hx > lx) ? 1 : -1;
+        if (hy !== ly)
+            ly += (hy > ly) ? 1 : -1;
+        link_pos_history.push([lx, ly]); 
     }
     return link_pos_history;
 }
