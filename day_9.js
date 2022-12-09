@@ -66,7 +66,7 @@ function move_link(link_pos_history, move) {
     let [hx, hy] = move; // The current head position (the last move in the instructions)
     let [lx, ly] = link_pos_history.at(-1); // The last known position of the link
 
-    // Return early if the link is already 1 unit away from the head in any direction
+    // Return early if the link is already 1 unit or less away from the head in any direction
     if (Math.abs(hx - lx) <= 1 && Math.abs(hy - ly) <= 1) 
         return link_pos_history;
 
