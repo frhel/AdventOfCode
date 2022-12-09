@@ -17,8 +17,8 @@ const input = fs.readFileSync('./data/day_9', 'utf8').split('\r\n');
 // of the input data
 const MOVE_DIR = new Map([['L', [0, -1]],['R', [0, 1]],['U', [1, 0]],['D', [-1, 0]]]);
 
-// Split each move into a direction and a distance, then translate the moves into a map of
-// coordinates (x, y) for easier tracking of link positions for larger chains
+// Split each move into a direction and a distance and translate them into an array of
+// coordinates (x, y) for easy recursive tracking of link positions for larger chains
 // ex: ['R', 3] -> [[0, 1], [0, 2], [0, 3]]
 const MOVES = translate_input_moves(input.map((move) => move.split(' ')));
 
@@ -42,6 +42,7 @@ console.log(`Part 2 Solution: ${part_2_unique_tail_moves.size}`); // 2607
 // -----------------------------------------------------------------------------------------------
 // Recursively calculate the link positions for a chain of the given size.
 function log_tail_moves(chain_size, instructions = MOVES) {
+    if (chain_size < 2) throw new Error('Chain size must be greater than 1');
     let link_pos_history = [instructions[0]]; // All links start at the head position
 
     // for each move of the current head, update and log the next link's position in relation
@@ -54,6 +55,7 @@ function log_tail_moves(chain_size, instructions = MOVES) {
     // chain (chain_size = 2)
     if (chain_size > 2) 
         link_pos_history = log_tail_moves(chain_size - 1, link_pos_history);
+
     return link_pos_history;
 } 
 
@@ -64,16 +66,16 @@ function move_link(link_pos_history, move) {
     let [hx, hy] = move; // The current head position (the last move in the instructions)
     let [lx, ly] = link_pos_history.at(-1); // The last known position of the link
 
+    // Return early if the link is already 1 unit away from the head in any direction
+    if (Math.abs(hx - lx) <= 1 && Math.abs(hy - ly) <= 1) 
+        return link_pos_history;
+
     // If the link is more than 1 unit in any direction away from the head, move it 1 unit
     // in the direction of the head(2 units if the link is diagonal from where it needs to move)
-    if (Math.abs(hx - lx) > 1 || Math.abs(hy - ly) > 1) {
-        if (hx !== lx)
-            lx += (hx > lx) ? 1 : -1;
-        if (hy !== ly)
-            ly += (hy > ly) ? 1 : -1;
-        link_pos_history.push([lx, ly]); 
-    }
-    return link_pos_history;
+    if (hx !== lx) lx += (hx > lx) ? 1 : -1;
+    if (hy !== ly) ly += (hy > ly) ? 1 : -1;
+
+    return link_pos_history.push([lx, ly]), link_pos_history;
 }
 
 
