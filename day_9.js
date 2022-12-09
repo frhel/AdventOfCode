@@ -23,6 +23,7 @@ const MOVE_DIR = new Map([['L', [0, -1]],['R', [0, 1]],['U', [1, 0]],['D', [-1, 
 const MOVES = translate_input_moves(input.map((move) => move.split(' ')));
 
 
+// ---------------------------------------Solution------------------------------------------------
 // ----------------------------------------Part 1-------------------------------------------------
 let part_1_tail_moves = log_tail_moves(2);
 // Convert the tail moves array into a Set of strings to remove duplicates
