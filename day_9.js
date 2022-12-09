@@ -77,8 +77,8 @@ function move_link(link_pos_history, move) {
 
 // -----------------------------------------------------------------------------------------------
 // Translate the moves into a map of coordinates. Doing this beforehand makes it easier to
-// write a recursive function to calculate the tail positions as we can just pass the tail
-// positions back into the function to calculate the next tail positions
+// write a recursive function to calculate the link positions as we can just pass the link
+// positions back into the function to calculate the next link positions
 // ex: ['R', 3] -> [[0, 1], [0, 2], [0, 3]]
 // ex: ['U', 2] -> [[1, 0], [2, 0]]
 function translate_input_moves(moves) {
