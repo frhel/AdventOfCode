@@ -19,6 +19,7 @@ const MOVE_DIR = new Map([['L', [0, -1]],['R', [0, 1]],['U', [1, 0]],['D', [-1, 
 
 // Split each move into a direction and a distance, then translate the moves into a map of
 // coordinates (x, y) for easier tracking of link positions for larger chains
+// ex: ['R', 3] -> [[0, 1], [0, 2], [0, 3]]
 const MOVES = translate_input_moves(input.map((move) => move.split(' ')));
 
 
