@@ -78,9 +78,9 @@ function draw_pixel(CRT_pixelmap, cycle_count, x_reg_val, CRT_line_length) {
     
     // If the sprite overlaps the pixel, draw a #, otherwise draw a .
     if (sprite === pixel_nr || sprite === pixel_nr - 1 || sprite === pixel_nr + 1)
-        CRT_pixelmap.at(-1).push('#')
+        CRT_pixelmap.at(-1).push('\u2588')
     else
-        CRT_pixelmap.at(-1).push('.');
+        CRT_pixelmap.at(-1).push(' ');
 
     // We check if we have reached the end of the line after adding the pixel so we
     // are utilising the full line length before starting a new line.
