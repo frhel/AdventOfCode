@@ -4,9 +4,7 @@
 // -----------------------------------------------------------------------------------------------
 
 // ---------------------------------------Imports-------------------------------------------------
-const { time } = require('console');
 const fs = require('fs');
-const { PassThrough } = require('stream');
 // Read in the contents of the data file and store it as an array of strings
 // where each string is obtained by splitting the input string on the newline character
 const input = fs.readFileSync('./data/day_9', 'utf8').split('\r\n');

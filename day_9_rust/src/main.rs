@@ -17,14 +17,14 @@ fn main() {
     
 // -------------------------------------------Solution------------------------------------------
     // --------------------------------------- Part 1 ------------------------------------------
-    let part_1_tail_moves = collect_tail_moves(&moves, 2);
-    let part_1_visited_nodes = extract_unique_nodes(&part_1_tail_moves);
+    let part_1_tail_moves = collect_tail_moves(moves.clone(), 2);
+    let part_1_visited_nodes = extract_unique_nodes(part_1_tail_moves);
     let part_1_num_visited_nodes = part_1_visited_nodes.len();
     println!("Part 1: {}", part_1_num_visited_nodes);
 
     // --------------------------------------- Part 2 ---------------------------------------
-    let part_2_tail_moves = collect_tail_moves(&moves, 10);
-    let part_2_visited_nodes = extract_unique_nodes(&part_2_tail_moves);
+    let part_2_tail_moves = collect_tail_moves(moves.clone(), 10);
+    let part_2_visited_nodes = extract_unique_nodes(part_2_tail_moves);
     let part_2_num_visited_nodes = part_2_visited_nodes.len();
     println!("Part 2: {}", part_2_num_visited_nodes);
      
@@ -32,19 +32,20 @@ fn main() {
 
 // ----------------------------------------------------------------------------------------------
 /// Run through all the links and process their moves to get the tail's moves
-fn collect_tail_moves(head_moves: &Vec<(i32, i32)>, chain_size: usize) -> Vec<(i32, i32)> {
+fn collect_tail_moves(head_moves: Vec<(i32, i32)>, chain_size: usize) -> Vec<(i32, i32)> {
     if chain_size < 2 { panic!("Chain size must be greater than 1"); }
+    let starting_point = head_moves[0].clone();
 
     // For each move of the head, calculate the next link's position in relation to the
     // new head position
-    let link_moves = head_moves.iter().skip(1).fold(vec![head_moves[0]], |link_moves, head_move| {
+    let link_moves: Vec<(i32, i32)> = head_moves.into_iter().skip(1).fold(vec![starting_point], |link_moves, head_move| {
         move_link(link_moves, head_move)
     });
 
     
     // Recursively call collect_tail_moves until we reach the tail of the chain
     if chain_size > 2 {
-        collect_tail_moves(&link_moves, chain_size - 1)
+        collect_tail_moves(link_moves, chain_size - 1)
     } else {
         link_moves
     }
@@ -53,9 +54,9 @@ fn collect_tail_moves(head_moves: &Vec<(i32, i32)>, chain_size: usize) -> Vec<(i
 // -------------------------------------------------------------------------------------------
 /// Move the link 1 unit in the direction of the head(2 units if the step is diagonal)
 /// and return the new link_moves vector
-fn move_link(link_moves: Vec<(i32, i32)>, head_move: &(i32, i32)) -> Vec<(i32, i32)> {
+fn move_link(mut link_moves: Vec<(i32, i32)>, head_move: (i32, i32)) -> Vec<(i32, i32)> {
     let (hx, hy) = head_move; // The current head position (the last move in the instructions)
-    let (lx, ly) = link_moves.last().unwrap(); // The last known position of the link
+    let (lx, ly) = link_moves.last().unwrap().to_owned(); // The last known position of the link
 
     // Return early if the link is already 1 unit or less away from the head in any direction
     if (hx - lx).abs() <= 1 && (hy - ly).abs() <= 1 {
@@ -64,25 +65,24 @@ fn move_link(link_moves: Vec<(i32, i32)>, head_move: &(i32, i32)) -> Vec<(i32, i
 
     // If the link is more than 1 unit in any direction away from the head, move it 1 unit
     // in the direction of the head(2 units if the link is diagonal from where it needs to move)
-    let mut new_link_move = (lx.clone(), ly.clone());
+    let mut new_link_move: (i32, i32) = (lx, ly);
     if hx != lx { new_link_move.0 = if hx > lx { new_link_move.0 + 1 } else { new_link_move.0 - 1 }; }
     if hy != ly { new_link_move.1 = if hy > ly { new_link_move.1 + 1 } else { new_link_move.1 - 1 }; }
 
     // push the new link move onto the link_moves vector and return it
-    let mut new_link_moves = link_moves.clone();
-    new_link_moves.push(new_link_move);
-    new_link_moves
+    link_moves.push(new_link_move);
+    link_moves
 }
 
 // -------------------------------------------------------------------------------------------
 /// Parse a vector of steps into a vector of unique nodes that the tail has visited
-fn extract_unique_nodes(input_vec: &Vec<(i32, i32)>) -> Vec<(i32, i32)> {
+fn extract_unique_nodes(input_vec: Vec<(i32, i32)>) -> Vec<(i32, i32)> {
     // This function gave me a lot of headache... I'm sure there's a better way to do this?
     // Basically I'm converting the input vector into a HashSet to remove duplicates, then
     // converting the HashSet back into a vector to return
-    let unique_nodes: Vec<&(i32, i32)> = input_vec.iter()
-        .collect::<HashSet<&(i32, i32)>>().into_iter().collect();
-    let output_nodes: Vec<(i32, i32)> = unique_nodes.iter().map(|node| **node).collect();
+    let unique_nodes: Vec<(i32, i32)> = input_vec.into_iter()
+        .collect::<HashSet<(i32, i32)>>().into_iter().collect();
+    let output_nodes: Vec<(i32, i32)> = unique_nodes.into_iter().map(|node| node).collect();
     output_nodes
 }
 
