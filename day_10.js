@@ -72,19 +72,18 @@ function execute_program(cycle_instructions, cycle_check_points, output_type) {
 // Draws one pixel to the screen. Each pixel is drawn in succession from left to right.
 // until the end of the line is reached. Then the next line is drawn - represented by
 // a new 0-indexed array in the CRT_pixelmap array.
-function draw_pixel(CRT_pixelmap, cycle_count, x_reg_val, CRT_line_length) {   
+function draw_pixel(CRT_pixelmap, cycle_count, x_reg_val, CRT_line_length) {
     // Need to subtract 1 from the cycle count as the pixel_nr starts at 0, not 1 like the cycle count.
-    let [sprite, pixel_nr] = [x_reg_val, cycle_count % CRT_line_length - 1];
-    
+    let [sprite, pixel_nr] = [x_reg_val, (cycle_count - 1) % CRT_line_length];
     // If the sprite overlaps the pixel, draw a #, otherwise draw a .
-    if (sprite === pixel_nr || sprite === pixel_nr - 1 || sprite === pixel_nr + 1)
+    if (sprite === pixel_nr || sprite + 1 === pixel_nr || sprite - 1 === pixel_nr)
         CRT_pixelmap.at(-1).push('\u2588')
     else
         CRT_pixelmap.at(-1).push(' ');
 
     // We check if we have reached the end of the line after adding the pixel so we
     // are utilising the full line length before starting a new line.
-    if (cycle_count % CRT_line_length === 0)
+    if (pixel_nr === 39)
         CRT_pixelmap.push([])
 
     return CRT_pixelmap;
