@@ -43,15 +43,16 @@ function execute_monkey_turn(monkey, monkeys, panic) {
         let [worry_level, next_monkey] = [0, 0];
         let test_multiple = [...monkeys.values()].reduce((acc, curr) => acc * curr.test, 1);
 
-        // Parsed the input to use item as a variable in the eval function so
-        // that we can use the item value in the operation directly
+        
+        /*  Parsed the input to use item as a variable in the eval function so
+            that we can use the item value in the operation directly
 
-        // Took me about 4 hours and a lot of googling to figure out that I
-        // needed to use a multiple of all the test values to keep the worry
-        // level within the bounds of the max safe integer. Spent a lot of time
-        // writing a lot of different solutions that didn't work because I
-        // didn't understand the problem properly. I'm still not sure why
-        /// this works, but it does, so I'm not going to question it.
+            Took me about 4 hours and a lot of googling to figure out that I
+            needed to use a multiple of all the test values to keep the worry
+            level within the bounds of the max safe integer. Spent a lot of time
+            writing a lot of different solutions that didn't work because I
+            didn't understand the problem properly. I'm still not sure why
+            this works, but it does, so I'm not going to question it. */        
         worry_level = eval(monkey.operation) % test_multiple;
         
         monkey.inspection_counter += 1;
