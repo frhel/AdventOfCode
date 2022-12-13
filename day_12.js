@@ -3,6 +3,15 @@
 // Solution by: https://github.com/frhel (Fry)
 // ----------------------------------------------------------------------------
 
+/*
+    This is the messiest so far. It's late and I'm tired. This took way too long
+    to solve and I really can't be bothered to clean it up.
+    It works, but it's not pretty.
+    At least I managed to get it working without looking at solutions.
+    
+    Yay.
+*/
+
 // -------------------------------- Imports -----------------------------------
 const fs = require('fs');
 const { start } = require('repl');
@@ -13,189 +22,231 @@ const input = fs.readFileSync('./data/day_12', 'utf8').split('\r\n');
 
 // --------------------------------- Setup ------------------------------------
 const start_pos = find_pos('S', input);
-const GOAL_POS = find_pos('E', input);
-const GRID = convert_letters_to_numbers(input);
-const DIR_MAP = [[1, 0], [0, 1], [-1, 0], [0, -1]];
-const GRID_BOUNDS = [GRID[0].length, GRID.length];
-
+const goal_pos = find_pos('E', input);
+// This whole thing is a mess. I start by making a grid of objects where each
+// object has a state property that corresponds to the character in the input
+const obj_grid = make_grid(input);
+// Then I convert all the letters to numbers for easier processing
+const nr_grid = convert_letters_to_numbers(obj_grid);
+// Then I calculate the distance from each point to the start and goal and 
+// store it in the grid
+let grid = calc_all_distances(nr_grid);
+// Then I make a deep copy of the grid so I can reset it later without 
+// any funny business
+const grid__copy = JSON.parse(JSON.stringify(grid));
+// These are just the row/col max values for easy access
+const row = grid.length;
+const col = grid[0].length;
+let starting_points = get_sorted_starting_points();
 
 
 // ------------------------------- Solution -----------------------------------
 // -------------------------------- Part 1 ------------------------------------
-let path = find_shortest_path(start_pos);
-console.log(`Part 1: Steps to goal: ${path.size - 1}`);
-
-
-let l_grid = convert_numbers_to_letters(GRID);
-console.log(l_grid.map(row => row.join('')).join('\r\n'))
+let path = find_path(start_pos, goal_pos);
+let path_length = resolve_path(path).length - 1;
+console.log(`Part 1: Shortest path length is ${path_length}`);
 
 // -------------------------------- Part 2 ------------------------------------
+// This is just messy. I can't be bothered to tidy it up
+let paths = [];
+for (let i = 0; i < starting_points.length; i++) {
+    // Reset the grid
+    grid = JSON.parse(JSON.stringify(grid__copy));
+    // Find and push all the paths to the paths array
+    let path = find_path(starting_points[i], goal_pos);
+    if(path) {
+        paths.push(resolve_path(path));
+    }    
+}
+// Sort the paths by length and print the shortest one
+// Need sleep. Brute force will have to do
+let shortest = paths.sort((a, b) => {
+    return a.length - b.length;
+});
+console.log(`Part 2: Shortest path length is ${shortest[0].length - 1}`);
+
 
 // ------------------------------ Functions -----------------------------------
 // ----------------------------------------------------------------------------
-function find_shortest_path(start_pos, no_recursion = false, visited = []) {
-    let path = populate_start_pos(start_pos, visited);
-    
-    while (path.size > 0) {
-        let [curr_pos, node] = [...path.entries()].at(-1);
-        if (!visited.includes(curr_pos))     
-            visited.push(curr_pos);
-        let [x, y] = curr_pos.split(',').map(Number);
-        curr_pos = curr_pos.split(',').map(Number);
-        let node_edges = node.get('edges');
-        let viable_edges = [];
-        for (let edge of node_edges) {
-            let [x, y] = edge.split(',').map(Number);
-            if (x == GOAL_POS[0] && y == GOAL_POS[1]) {
-                path.set(edge, new Node([x, y], visited));
-                return path;
-            }
-            let edge_node = path.get(edge);
-            if (edge_node) {
-                continue;
-            } else {
-                edge_node = new Node([x, y], visited);
-                viable_edges.push(edge_node);
-            }
-        }
+function find_path(start, goal) {
+    let location = {r: start[0], c: start[1]};
 
-                
-        let most_viable_edge = new Map();
-        let most_viable_key = '';
-        let steps = 0;
-        if (no_recursion === false) {       
-            for (let edge of viable_edges) {           
-                let [x, y] = [...edge.keys()][0].split(',').map(Number);
-                let key = [x, y].join(',');         
-                node.get('edges').delete(key);
-                let coords = [x, y];
-                let edge_path = find_shortest_path(coords, true);
-                // get the last node in the path and check if it is the goal
-                // if it is, then we have found the shortest path 
-            
-                let last_node = (edge_path.size > 0) ? [...edge_path.keys()].at(-1) : '';
-                console.log(last_node)
-                if (edge_path.size > 0 && last_node === GOAL_POS.join(',')) {
-                    if (most_viable_edge.size === 0 || edge_path.size < most_viable_edge.size) {
-                        steps++;
-                        console.log(visited)
-                        console.log(last_node === GOAL_POS.join(','))
-                        most_viable_edge.set(key, edge.get(key));
-                        most_viable_key = key;
-                    }
-                }
-            }
-        }
+    // Took me most of the day of banging head against wall before
+    // realising that my original implementation was failing because
+    // I wasn't using a queue...
+    let queue = [];
 
-        if (most_viable_edge.size === 0 && viable_edges.length > 0) {
-            most_viable_edge = [...viable_edges.entries()]
-                .sort((a, b) => a[1].get('distance') - b[1].get('distance'))[0][1];
-            most_viable_key = most_viable_edge.keys().next().value;
-        }
-        if (visited.includes('10,19'))
-        if (most_viable_edge.size > 0 && !path.get(most_viable_key)) {
-            let value = most_viable_edge.get(most_viable_key);
-            //console.log(most_viable_key, value)
-            node.get('edges').delete(most_viable_key);
-            path.set(most_viable_key, value);
-        } else {
-            path.delete(curr_pos.join(','));
+    // Presave all the edges for each location on the grid itself
+    find_all_valid_edges();
+    queue.push(location);
+
+    // Loop through the queue until it's empty or we find the goal
+    while(queue.length > 0){
+        // Actually didn't know about shift() before this. I've been using
+        // splice(0, 1) for ages. No clue which is faster though.
+        let current_location = queue.shift();
+
+        // If we've found the goal, return the path
+        if(current_location.r == goal[0] && current_location.c == goal[1])
+            return current_location;
+        grid[current_location.r][current_location.c].state = 'visited'    
+        
+        // Get the edges for the current location and add them to the queue
+        let edges = grid[current_location.r][current_location.c].edges.reverse();
+        while (edges.length > 0) {
+            // Use up the edges by popping them off the array so we don't
+            // go through them again. This had me stumped for a while
+            // doing infinite loops galore...
+            let edge = edges.pop();
+            if(grid[edge.r][edge.c].state !== 'visited') {
+                queue.push(edge);
+                // Store the parent so we can resolve the path back to origin later
+                grid[edge.r][edge.c]['parent'] = current_location;
+            }
         }
     }
-    
-
-    return path;
+    return false;
 }
 
-function find_edges(x, y, visited) {
-    let edges = new Set();
-    // Go through all possible directions and check if they are valid moves
-    // A valid move is defined as a move that does not go out of bounds and 
-    // is equal to current position or a space value, 1 greater or 1 less.
-    for (let [dx, dy] of DIR_MAP) {
-        let [nx, ny] = [x + dx, y + dy];
-        let [curr, edge] = [0, 0];
-        if (nx >= 0 && nx < GRID_BOUNDS[0] && ny >= 0 && ny < GRID_BOUNDS[1])
-            [curr, edge] = [GRID[y][x], GRID[ny][nx]];
-        else 
-            continue;
-
-        if ((edge <= curr + 1 && !visited.includes([nx, ny].join(',')))
-            || (nx == GOAL_POS[0] && ny == GOAL_POS[1])) {
-                if (nx == GOAL_POS[0] && ny == GOAL_POS[1] && curr !== 25)
-                   continue;
-            edges.add([x + dx, y + dy].join(','));
+// Aggregate all the possible starting points for part 2 into an array
+// for brute forcing
+function get_sorted_starting_points() {
+    let starting_points = [];
+    for (let r = 0; r < row; r++) {
+        for (let c = 0; c < col; c++) {
+            if (grid[r][c].state == 'start' || grid[r][c].state == '0')
+                starting_points.push([r, c]);
         }
     }
+    // Don't need to sort them because we're brute forcing anyway
+    // but I did it anyway cause I wasn't planning on brute forcing
+    return starting_points.sort((a, b) => {
+        return grid[a[0]][a[1]].dist - grid[b[0]][b[1]].dist;
+    });
+}
+
+// Follow the path back to the start, log each step and return the path
+function resolve_path(path){
+    let paths = [path];
+    while(true){
+        let r = path.r;
+        let c = path.c;
+        let parent = grid[r][c].parent;
+        if(parent == undefined)
+            break;
+        paths.push(parent);
+        path = {r:parent.r,c:parent.c};
+    }
+    return paths;
+}
+
+// Iterate through the grid and log all the valid edges for each location in the grid
+// Save the edges on the node in the grid itself
+function find_all_valid_edges() {
+    let row = grid.length;
+    let col = grid[0].length;    
+    let edges = []; 
+    for (let r = 0; r < row; r++) {
+        for (let c = 0; c < col; c++) {
+            let edges = explore_location({r: r, c: c});
+            grid[r][c].edges = edges;
+        }
+    }
+}
+
+// Loop through the grid and calculate the distance from each point to the start and goal
+// Save the ratio of the two distances as the distance for each point straight onto
+// the grid itself
+function calc_all_distances(input_grid) {
+    let row = input_grid.length;
+    let col = input_grid[0].length;
+    for (let r = 0; r < row; r++) {
+        for (let c = 0; c < col; c++) {
+            if (input_grid[r][c].state == 'start') continue;
+            if (input_grid[r][c].state == 'goal') continue;
+            input_grid[r][c] = {
+                state: input_grid[r][c].state,
+                dist: find_distance([c, r], start_pos) / find_distance([c, r], goal_pos)
+                
+            };
+        }
+    }
+    return input_grid;
+}
+
+// Find and validate all the edges for a given node
+function explore_location (location){
+    let r = location.r;
+    let c = location.c;
+    let edges = [];
+    if (safe_neighbour(r, c - 1, location)) edges.push({ r: r, c: c - 1 });
+    if (safe_neighbour(r, c + 1, location)) edges.push({ r: r, c: c + 1 });
+    if (safe_neighbour(r - 1, c, location)) edges.push({ r: r - 1, c: c });
+    if (safe_neighbour(r + 1, c, location)) edges.push({ r: r + 1, c: c });
+    edges = edges.sort((a, b) => {
+        (grid[b.r][b.c].dist - grid[a.r][a.c].dist)
+    });  
     return edges;
 }
 
-function Node(curr_pos, visited) {
-    return new Map([
-        [curr_pos.join(','), new Map([
-            ['distance', find_distance(curr_pos, GOAL_POS)],
-            ['edges', find_edges(curr_pos[0], curr_pos[1], visited)]
-            ])
-        ]
-    ]);
-}
+// Make sure that we're not out of bounds
+function safe_neighbour(r, c, l) {
+    if (r < 0 || r >= row) return false;
+    if (c < 0 || c >= col) return false;
+    if (grid[r][c].state > grid[l.r][l.c].state + 1) return false;
+    return true;
+};
 
-function find_distance(start_pos) {
-    return Math.abs(start_pos[0] - GOAL_POS[0]) + Math.abs(start_pos[1] - GOAL_POS[1]);
+function find_distance(pos1, pos2) {
+    return Math.abs(pos1[0] - pos2[0]) + Math.abs(pos1[1] - pos2[1]);
 }
 
 // --------------------------- Setup Functions --------------------------------
 // ----------------------------------------------------------------------------
-function populate_start_pos(start_pos, visited) {
-    let path = new Node(start_pos, visited);
-    let node = path.get(start_pos.join(','));
-    let node_edges = node.get('edges');
-    for (let [dx, dy] of DIR_MAP) {
-        let [x, y] = start_pos;
-        if (x + dx >= 0 && x + dx < GRID_BOUNDS[0]
-            && y + dy >= 0 && y + dy < GRID_BOUNDS[1]) {
-            node_edges.add([x + dx, y + dy].join(','));
-        }
-    }
-    path.set(start_pos.join(','), node);
-    return path;
-}
-
-function letter(char) {
-    return String.fromCharCode(char + 97);
-}
-
-function convert_numbers_to_letters(input) {
+// Create a grid from the input file with objects for each node in the grid
+// saving the 'start', 'goal' and the height of the node as state property
+function make_grid(input) {
     let grid = [];
     for (let line of input) {
         let row = [];
-        for (let num of line)
-            if (num !== '#')
-                row.push(String.fromCharCode(num + 97));
+        for (let char of line) {
+            if (char == 'S')
+                row.push({state: 'start'});
+            else if (char == 'E')
+                row.push({state: 'goal'})
             else
-                row.push(num);
+                row.push({state: char});
+        }
         grid.push(row);
     }
     return grid;
 }
 
-function convert_letters_to_numbers(input) {
+// Convert all the state values to numbers for easier comparison when finding
+// valid edges
+function convert_letters_to_numbers(in_grid) {
     let grid = [];
-    input = input.map(line => line.replace('S', 'a').replace('E', 'z'));
-    for (let line of input) {
+    for (let line of in_grid) {
         let row = [];
-        for (let char of line)
-            row.push(char.charCodeAt(0) - 97);
+        for (let char of line) {
+            if (char.state == 'start')
+                row.push({state: 0});
+            else if (char.state == 'goal')
+                row.push({state: 25})
+            else
+                row.push({state: char.state.charCodeAt(0) - 97})
+        }
         grid.push(row);
     }
     return grid;
 }
 
+// Just a helper function to find the position of the start and goal
 function find_pos(symbol) {
     let pos = [];
-    for (let y = 0; y < input.length; y++)
-        for (let x = 0; x < input[y].length; x++)
-            if (input[y][x] == symbol)
+    for (let x = 0; x < input.length; x++)
+        for (let y = 0; y < input[x].length; y++)
+            if (input[x][y] === symbol)
                 pos = [x, y];
     return pos;
 }
