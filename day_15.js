@@ -80,19 +80,26 @@ function check_for_beacon(sensors, test_row, limit) {
         let [next_start, next_end] = (next !== null)
             ? [next.x - next.margin, next.x + next.margin] : [null, null];
 
+        // Throw away the sensors that are outside the range of the current row
         if ((start < 0 && end < 0) || (start > limit && end > limit))
             continue;
+        // Adjust the start and end coordinates if they are outside the range
         start = (start < 0) ? 0 : start;
         end = (end > limit) ? limit : end;
 
-        if (next_start === null)
-            return
-
-        if (end > next_end) {
-            sensors[i + 1] = sensors[i];
-            continue;
+        // Gotta check if we're at the end of the row or not to make the check
+        // against next sensor
+        if (next_start !== null) {
+            if (end > next_end) {
+                sensors[i + 1] = sensors[i];
+                continue;
+            }
+            else if (end < next_start)
+                return [end + 1, test_row].join(',');
         }
 
+        // If we're here, we're at the end of the row and we have one final
+        // check to see if the beacon is on the edge of the row
         if (end < next_start)
             return [end + 1, test_row].join(',');
     }
@@ -101,6 +108,7 @@ function check_for_beacon(sensors, test_row, limit) {
 
 // This is basically the same as above, except we're not looking for a beacon
 // but rather the number of cells covered by the sensors in the given row
+// Works basically the same.
 function calculate_covered_cells(filtered_sensors, test_row) {
     filtered_sensors = filtered_sensors
         .sort((a, b) => (a.x - a.margin) - (b.x - b.margin))
@@ -114,17 +122,21 @@ function calculate_covered_cells(filtered_sensors, test_row) {
         let [next_start, next_end] = (next !== null)
             ? [next.x - next.margin, next.x + next.margin] : [null, null];
 
+        // If we're at the end of the row, we just add the remaining cells
+        // to the accumulator and return it
         if (next_start === null)
             return accumulator + Math.abs(end - start);
 
+        // If the next sensor is completely inside the current sensor, we
+        // just skip it by setting the next sensor to the current one
         if (end > next_end) {
             sensors[i + 1] = sensors[i];
             continue;
         }
 
-        if (end < next_start)
-            return [end + 1, test_row].join(',');
-
+        // If the end of the current sensor is inside the start of the next
+        // sensor, we set the end of the current sensor to the start of the
+        // next sensor so we don't add the same cells twice
         if (end > next_start)
             end = end - (Math.abs(next_start - end));
 
