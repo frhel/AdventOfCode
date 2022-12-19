@@ -131,7 +131,6 @@ function count_outside_edges(coords_list, edges, grid_bounds) {
 function inside_bounds(coords, bounds) {
     // Expand the bounds by 1 in each direction
     bounds = bounds.map(Number).map((x, i) => i % 2 === 0 ? x - 1 : x + 1)
-
     let [min_x, max_x, min_y, max_y, min_z, max_z] = bounds;
 
     // Split the coords string into an array of numbers so we can compare
