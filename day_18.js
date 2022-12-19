@@ -47,12 +47,18 @@ console.log(`Part 2: ${outside_edge_count} exposed faces`);
 // ----------------------------------------------------------------------------
 // ------------------------------ Functions -----------------------------------
 // ----------------------------------------------------------------------------
+
+// ----------------------------------------------------------------------------
 // Part 1 solution. It's pretty simple. Just run through the list of coordinates
 // and count the number of edges that are exposed to air. That means both
-// outside of the structure and inside of the structure.
+// outside of the droplet structure and inside.
 function count_edges(coords_list, edges) {
     let visible_edges = 0;
     for (let coords of coords_list) {
+
+        // Ping the edges of the current coordinate and see if they are in
+        // the list of coordinates. If they are not, then we have found an
+        // exposed edge that we can increment the count for.
         for (let edge of edges) {
             let joined = join_coords(coords, edge);
             if (!coords_list.has(joined)) {
@@ -63,58 +69,64 @@ function count_edges(coords_list, edges) {
     return visible_edges;
 }
 
-// ----------------------------------------------------------------------------
-// Just run through the list of coordinates and count the number of edges
-// that are exposed to the outside of the structure.
-function count_outside_edges(coords_list, edges) {
-    let outside = map_exterior_air(coords_list, edges, grid_bounds);
-    let edge_count = 0;
-    for (let coords of outside) {
-        for (let edge of edges) {
-            let joined = join_coords(coords, edge);
-            if (coords_list.has(joined)) {
-                edge_count++;
-            }
-        }
-    }
-    return edge_count;
-}
 
 // ----------------------------------------------------------------------------
-// This function is used to map the outside of the structure. It uses a BFS
-// to find all of the voxels that are outside of the structure. It returns
-// a set of coordinates that are outside of the structure. At the moment
-// it's returning every single voxel that is outside of the structure, but
-// I'm tired and I don't care enough to return only the voxels that are
-// adjacent to the structure.
-function map_exterior_air(coords_list, edges, grid_bounds) {
-    let start = [0, 0, 01].join(',');
+// This function is used to map the outside of the structure, using BFS.
+// It returns the number of edges that are exposed to air outside of the
+// droplet structure.
+function count_outside_edges(coords_list, edges, grid_bounds) {
+    let [min_x, max_x, min_y, max_y, min_z, max_z] = grid_bounds;
+
+    // Start the BFS one voxel outside the lowest bounds of the structure
+    let start = [min_x - 1, min_y - 1, min_z - 1].join(',');
+
+    // outside will serve both as a set of coordinates that have already been
+    // visited and as a set of coordinates that are outside of the structure
+    // for the purposes of the BFS.
     let outside = new Set();
+    let surface_count = 0;
     let queue = [start];
     while (queue.length > 0) {
         let current = queue.shift();
+
+        // If we hit a coordinate that has already been visited, then we
+        // don't need to add it to the queue again.
         if (outside.has(current)) continue;
+
+        // Otherwise, we add it to the outside set and process the edges.
         outside.add(current);
+
         for (let edge of edges) {
             let joined = join_coords(current, edge);
-            if (coords_list.has(joined)
-                || outside.has(joined)
-                || outside.has(joined)
-                || !inside_bounds(joined, grid_bounds)) continue;
+
+            // If the coordinate is already in the outside set, or if it's
+            // outside of the bounds of the structure, then we don't need to
+            // add it to the queue.
+            if (outside.has(joined) || !inside_bounds(joined, grid_bounds))
+                continue;
+
+            // If the coordinate is inside the structure, then we have found
+            // a surface voxel and we can increment the surface count. Also,
+            // we don't need to add it to the queue.
+            else if (coords_list.has(joined)) {
+                surface_count++;
+                continue;
+            }
+
             queue.push(joined);
         }
     }
-    return outside;
+    return surface_count;
 }
 
 // ----------------------------------------------------------------------------
 // ------------------------------- Utilities ----------------------------------
 // ----------------------------------------------------------------------------
-// A function to check if a given coordinate is inside the bounds of the grid
-// that we're using to map the outside of the structure or not. It just
-// looks nicer than the if statement that I was using before. Also, I'm
-// subtracting 1 from the min values and adding 1 to the max values because
-// I want to be able to hit the edges of the structure from the outside.
+// A function to check if a given coordinate is inside the bounds of the bounding
+// cube that encloses the structure. Looks nicer than the if statement that I 
+// was using before. Also, I'm subtracting 1 from the min values and adding 1 
+// to the max values because I want to be able to ping the edges of the structure
+// with the BFS from the outside.
 function inside_bounds(coords, bounds) {
     bounds = bounds.map(Number).map((x, i) => i % 2 === 0 ? x - 1 : x + 1)
     let [min_x, max_x, min_y, max_y, min_z, max_z] = bounds;
