@@ -7,7 +7,6 @@
 // -------------------------------- Imports -----------------------------------
 // ----------------------------------------------------------------------------
 const fs = require('fs');
-const { cloneDeep, find } = require('lodash');
 // Read in the contents of the data file and store it as an array of strings
 // where each string is obtained by splitting the input string on the newline 
 // character.
