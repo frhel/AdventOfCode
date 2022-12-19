@@ -80,10 +80,9 @@ function count_outside_edges(coords_list, edges, grid_bounds) {
     // Start the BFS one voxel outside the lowest bounds of the structure
     let start = [min_x - 1, min_y - 1, min_z - 1].join(',');
 
-    // outside will serve both as a set of coordinates that have already been
-    // visited and as a set of coordinates that are outside of the structure
-    // for the purposes of the BFS.
-    let outside = new Set();
+    // Visited keeps track of the coordinates that have already been visited
+    // by the BFS so we don't get stuck in an infinite loop.
+    let visited = new Set();
     let surface_count = 0;
     let queue = [start];
     while (queue.length > 0) {
@@ -91,10 +90,10 @@ function count_outside_edges(coords_list, edges, grid_bounds) {
 
         // If we hit a coordinate that has already been visited, then we
         // don't need to add it to the queue again.
-        if (outside.has(current)) continue;
+        if (visited.has(current)) continue;
 
         // Otherwise, we add it to the outside set and process the edges.
-        outside.add(current);
+        visited.add(current);
 
         for (let edge of edges) {
             let joined = join_coords(current, edge);
@@ -102,7 +101,7 @@ function count_outside_edges(coords_list, edges, grid_bounds) {
             // If the coordinate is already in the outside set, or if it's
             // outside of the bounds of the structure, then we don't need to
             // add it to the queue.
-            if (outside.has(joined) || !inside_bounds(joined, grid_bounds))
+            if (visited.has(joined) || !inside_bounds(joined, grid_bounds))
                 continue;
 
             // If the coordinate is inside the structure, then we have found
