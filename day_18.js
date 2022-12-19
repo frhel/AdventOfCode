@@ -127,8 +127,13 @@ function count_outside_edges(coords_list, edges, grid_bounds) {
 // to the max values because I want to be able to ping the edges of the structure
 // with the BFS from the outside.
 function inside_bounds(coords, bounds) {
+    // Expand the bounds by 1 in each direction
     bounds = bounds.map(Number).map((x, i) => i % 2 === 0 ? x - 1 : x + 1)
+
     let [min_x, max_x, min_y, max_y, min_z, max_z] = bounds;
+
+    // Split the coords string into an array of numbers so we can compare
+    // them against the bounds.
     let [x, y, z] = coords.split(',').map(Number);
     if (x < min_x || x > max_x || y < min_y || y > max_y || z < min_z || z > max_z) {
         return false;
@@ -137,8 +142,11 @@ function inside_bounds(coords, bounds) {
 }
 
 // ----------------------------------------------------------------------------
-// Just a little utility to simplify all the coordinate joining that I'm
-// doing. Makes using those Sets() for quick lookups a lot easier.
+// Just a little utility to simplify all the coordinates splitting and joining
+// that I was doing. Makes the main functions a little easier to read.
+// This is used to join the coordinates of the current voxel with the relative
+// position of the edge that we're pinging and return the new coordinate as 
+// a string to be used for quick lookups.
 function join_coords(coords, edge) {
     let [x2, y2, z2] = edge.map(Number);
     let [x, y, z] = coords.split(',').map(Number);
