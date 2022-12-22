@@ -20,22 +20,25 @@ let rounds = 30;
 
 // Just for fun - let's see how long it takes to run the solution
 let _start_time = new Date().getTime();
-console.log(`Starting to solve Part 1 at ${new Date().toLocaleTimeString()}`)
 // ------------------------------- Solution -----------------------------------
 // -------------------------------- Part 1 ------------------------------------
-let most_efficient_path = find_most_efficient_path(valves, start, rounds);
+console.log(`Starting to solve Part 1 at ${new Date().toLocaleTimeString()}`)
+let most_efficient_path = find_most_efficient_path(valves, start, rounds, 1);
 console.log(most_efficient_path)
 console.log(`Part 1 solution: ${most_efficient_path.total_flow}`)
 // Best time so far: 490167ms to run
 
 // -------------------------------- Part 2 ------------------------------------
+rounds = 26;
+let most_efficient_paths = find_most_efficient_path(valves, start, rounds, 2)
+console.log(`Part 2 solution: ${most_efficient_paths.total_flow}`)
 
 
 let delta_time = new Date().getTime() - _start_time;
 console.log(`Solution took ${~~(delta_time/1000/60)} minutes and ${delta_time/1000} seconds to run`)
 // ------------------------------ Functions -----------------------------------
 // ----------------------------------------------------------------------------
-function find_most_efficient_path(valves, start, rounds) {
+function find_most_efficient_path(valves, start, rounds, path_count) {
     let valuables = valves.filter((node) => node[1].rate > 0);
     visited = [start]
     let path = [start];
@@ -45,7 +48,7 @@ function find_most_efficient_path(valves, start, rounds) {
         let start_node = valves.find((node) => node[0] === path.at(-1));
         if (valuables.length === 0) break;
         let edges = cloneDeep(start_node[1].edges);
-        let next_node_name = visit_edges(start_node, valves, depth, visited, valuables);
+        let next_node_name = visit_edges(start_node, valves, depth, visited, valuables, rounds);
         visited.push(next_node_name)
         valuables = valuables.filter((node) => node[0] !== next_node_name);
         let distance = edges[next_node_name].length + 1;
@@ -56,28 +59,28 @@ function find_most_efficient_path(valves, start, rounds) {
     // path = ['AA', 'DD', 'BB', 'JJ', 'HH', 'EE', 'CC',]
     console.log('['+path.join('] => [').trim()+']')
     let node = valves.find((node) => node[0] === path.at(-1));
-    return calculate_steps({ node: node, root: visited.at(-1), depth: 1, visited: path }, valves);
+    return calculate_steps({ node: node, root: visited.at(-1), depth: 1, visited: path }, valves, rounds);
 }
 
-function visit_edges(node, valves, depth, visited, valuables) {
+function visit_edges(node, valves, depth, visited, valuables, rounds) {
     depth = (depth > valuables.length) ? valuables.length : depth;
-    let queue = [];
+    let stack = [];
     let garbage = new Set();
     if (valuables.length === 1) {
         return valuables[0][0];
     } else {
-        queue.push({ node: node, root: node[0], depth: 1, visited: visited.slice(0, -1), calculated: { steps: 0, flow_rate: 0, total_flow: 0 } });
+        stack.push({ node: node, root: node[0], depth: 1, visited: visited.slice(0, -1), calculated: { steps: 0, flow_rate: 0, total_flow: 0 } });
     }
     let count = 0;
     let winner = { path: ['AAA'], calculated: { steps: 0, flow_rate: 0, total_flow: 0 } };
-    while (queue.length > 0 && valuables.length > 1) {
+    while (stack.length > 0 && valuables.length > 1) {
         count++;
         if (count % 10000 === 0) {
             let delta_time = new Date().getTime() - _start_time;
             console.log(`${count} iterations in ${delta_time/1000}s`);
         }
 
-        let current = queue.shift();
+        let current = stack.pop();
         if (current.node[0] === undefined || current.visited.includes(current.node[0])) {
             continue;
         }
@@ -89,7 +92,7 @@ function visit_edges(node, valves, depth, visited, valuables) {
                 let edge_node = valves.find((node) => node[0] === edge_name);
                 new_root = (current.depth < 2) ? edge_name : current.root;
                 let new_depth = current.depth + 1;
-                queue.push({ node: edge_node, root: new_root, depth: new_depth, visited: cloneDeep(current.visited) });
+                stack.push({ node: edge_node, root: new_root, depth: new_depth, visited: cloneDeep(current.visited) });
             }
         } else {
             current.calculated = calculate_steps(current, valves);
