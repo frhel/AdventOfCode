@@ -26,12 +26,13 @@ console.log(`Starting to solve Part 1 at ${new Date().toLocaleTimeString()}`)
 let most_efficient_path = find_most_efficient_path(valves, start, rounds, 1);
 console.log(most_efficient_path)
 console.log(`Part 1 solution: ${most_efficient_path.total_flow}`)
-// Best time so far: 490167ms to run
+// // Best time so far: 490167ms to run
 
-// -------------------------------- Part 2 ------------------------------------
+// // -------------------------------- Part 2 ------------------------------------
 rounds = 26;
 let most_efficient_paths = find_most_efficient_path(valves, start, rounds, 2)
 console.log(`Part 2 solution: ${most_efficient_paths.total_flow}`)
+// 2532 too low
 
 
 let delta_time = new Date().getTime() - _start_time;
@@ -39,69 +40,115 @@ console.log(`Solution took ${~~(delta_time/1000/60)} minutes and ${delta_time/10
 // ------------------------------ Functions -----------------------------------
 // ----------------------------------------------------------------------------
 function find_most_efficient_path(valves, start, rounds, path_count) {
-    let valuables = valves.filter((node) => node[1].rate > 0);
-    visited = [start]
-    let path = [start];
-    let depth = 6;
+    let unopened = valves.filter((node) => node[1].rate > 0);
+    let visited = [];
+    for (let i = 0; i < path_count; i++) {
+        visited.push([start]);
+    }
+    let depth = 6
+    let distance_travelled = 0;
     rounds--;
-    while (rounds > 0) {
-        let start_node = valves.find((node) => node[0] === path.at(-1));
-        if (valuables.length === 0) break;
-        let edges = cloneDeep(start_node[1].edges);
-        let next_node_name = visit_edges(start_node, valves, depth, visited, valuables, rounds);
-        visited.push(next_node_name)
-        valuables = valuables.filter((node) => node[0] !== next_node_name);
-        let distance = edges[next_node_name].length + 1;
-        path.push(next_node_name);
-        rounds -= distance;
+    while (rounds > distance_travelled) {
+        let best_nodes = [];
+        if (unopened.length === 0) {
+            console.log('here')
+            break
+        }
+        for (let open of unopened) {
+            let node = valves.find((node) => node[0] === open[0]);
+            let path = visit_edges(node, valves, depth, unopened, rounds);
+            best_nodes.push(path);
+        }
+        let total_distance = 0;
+        let best = ['', 0];
+        let combined_best = [];
+        for (let i = 0; i < path_count; i++) {
+            for (let node of best_nodes) {
+                let temp_node = cloneDeep(node);
+                temp_node.visited = visited[i].concat(temp_node.visited);
+                let real_flow = calculate_steps(temp_node, valves);
+                temp_node.calculated = real_flow;
+                combined_best.push(temp_node)
+            }
+        }
+
+        // sort by max flow so we don't remove the best nodes later
+        combined_best = combined_best.sort((a, b) => b.calculated.total_flow - a.calculated.total_flow);
+        // now filter the nodes so we keep only the best nodes with the same root
+        combined_best = combined_best.filter((node, index, self) => self.findIndex((n) => n.root === node.root) === index);
+        console.log(combined_best)
+        for (let i = 0; i < path_count; i++) {
+            let new_best_path = combined_best[i].visited;
+            // only grab the first nodes up to and including the root node
+            let new_best = new_best_path.slice(0, new_best_path.indexOf(combined_best[i].root)+1);
+            visited[i] = new_best;
+
+            let distance = calc_path_length(new_best, valves);
+            if (distance > total_distance) {
+                total_distance = distance;
+            }
+            unopened = unopened.filter((node) => node[0] !== new_best);
+        }
+        console.log(visited)
+        
+        distance_travelled = total_distance;
     }
     // console.log(path)
-    // path = ['AA', 'DD', 'BB', 'JJ', 'HH', 'EE', 'CC',]
-    console.log('['+path.join('] => [').trim()+']')
-    let node = valves.find((node) => node[0] === path.at(-1));
-    return calculate_steps({ node: node, root: visited.at(-1), depth: 1, visited: path }, valves, rounds);
+    //path = ['AA', 'DD', 'BB', 'JJ', 'HH', 'EE', 'CC',]
+    let total_flow = 0;
+    for (let i = 0; i < path_count; i++) {
+        console.log('['+visited[i].join('] => [').trim()+']')
+        let node = valves.find((node) => node[0] === visited[i].at(-1));
+        let flow = calculate_steps({ node: node, root: visited[i].at(-1), depth: 1, visited: visited[i] }, valves, rounds);
+        total_flow += flow.total_flow;
+    }
+    return { path: visited, total_flow: total_flow };
 }
 
-function visit_edges(node, valves, depth, visited, valuables, rounds) {
-    depth = (depth > valuables.length) ? valuables.length : depth;
-    let stack = [];
-    let garbage = new Set();
-    if (valuables.length === 1) {
-        return valuables[0][0];
-    } else {
-        stack.push({ node: node, root: node[0], depth: 1, visited: visited.slice(0, -1), calculated: { steps: 0, flow_rate: 0, total_flow: 0 } });
+function calc_path_length(path, valves) {
+    let length = 0;
+    for (let i = 1; i < path.length; i++) {
+        let node = valves.find((node) => node[0] === path[i-1]);
+        let edge = [...Object.entries(node[1].edges)].find((edge) => edge[0] === path[i]);
+        length += edge[1].length;
     }
+    return length;
+}
+
+function visit_edges(node, valves, depth, unopened, rounds) {
+    depth = (depth > unopened.length) ? unopened.length : depth;
+    let stack = [];
+    stack.push({ node: node, root: node[0], depth: 1, visited: [], calculated: { steps: 0, flow_rate: 0, total_flow: 0 } });
     let count = 0;
-    let winner = { path: ['AAA'], calculated: { steps: 0, flow_rate: 0, total_flow: 0 } };
-    while (stack.length > 0 && valuables.length > 1) {
-        count++;
-        if (count % 10000 === 0) {
-            let delta_time = new Date().getTime() - _start_time;
-            console.log(`${count} iterations in ${delta_time/1000}s`);
-        }
+    let winner = stack[0];
+    while (stack.length > 0 && unopened.length > 1) {       
 
         let current = stack.pop();
         if (current.node[0] === undefined || current.visited.includes(current.node[0])) {
             continue;
         }
-        let current_node_edges = valuables
+        let current_node_edges = unopened
         current.visited.push(current.node[0])
         if (current.depth < depth) {
             for (let edge of current_node_edges) {
                 let edge_name = edge[0];
                 let edge_node = valves.find((node) => node[0] === edge_name);
-                new_root = (current.depth < 2) ? edge_name : current.root;
                 let new_depth = current.depth + 1;
-                stack.push({ node: edge_node, root: new_root, depth: new_depth, visited: cloneDeep(current.visited) });
+                stack.push({ node: edge_node, root: current.root, depth: new_depth, visited: cloneDeep(current.visited) });
             }
         } else {
+            count++;
+            if (count % 100000 === 0) {
+                let delta_time = new Date().getTime() - _start_time;
+                console.log(`${count} iterations in ${delta_time/1000}s`);
+            }
             current.calculated = calculate_steps(current, valves);
             if (current.calculated.total_flow > winner.calculated.total_flow) {
                 winner = current;
             }
         }
     }
-    return winner.root
+    return winner
 }
 
 function calculate_steps(branch, valves) {
