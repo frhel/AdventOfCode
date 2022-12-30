@@ -94,25 +94,24 @@ function build_tower(input, shapes, max_rocks) {
 
         // Save the shape's anchor point within the tower [x, y]
         let shape_anchor = [entry_h_dist, (tower.length - shape.length)];
-        console.log(shape_anchor[1])
 
-        while (true) {
-            let next_instruction = input.shift();
-            input.push(next_instruction);
-            // Move the shape horizontally according to the rules
-            if (next_instruction === '>') {
-                let valid = check_valid_move(tower, shape, shape_anchor, 'right');
+        // while (true) {
+        //     let next_instruction = input.shift();
+        //     input.push(next_instruction);
+        //     // Move the shape horizontally according to the rules
+        //     if (next_instruction === '>') {
+        //         let valid = check_valid_move(tower, shape, shape_anchor, 'right');
 
-            } else if (next_instruction === '<') {
-                // Move left if possible
-            }
+        //     } else if (next_instruction === '<') {
+        //         // Move left if possible
+        //     }
 
 
-            // Move the shape vertically by 1 if possible
+        //     // Move the shape vertically by 1 if possible
 
-            break;
-        }
-
+        //     break;
+        // }
+        console.log(shapes)
         draw_tower(tower, shape, shape_anchor);
         rocks++
     }
@@ -128,12 +127,12 @@ function check_valid_move(tower, shape, anchor, direction) {
 // ------------------------------- Utilities ----------------------------------
 // ----------------------------------------------------------------------------
 function draw_tower(arr, shape, anchor) {
-    console.log(anchor[1])
-    console.log('---------------------');
-    let tower = arr.slice();
-    for (let i = tower.length - 1; i >= 0; i--) {
-    }
-    console.log('=====================');
+    //console.log(anchor[0])
+    // console.log('---------------------');
+    // let tower = arr.slice();
+    // for (let i = tower.length - 1; i >= 0; i--) {
+    // }
+    // console.log('=====================');
 }
 
 // ----------------------------------------------------------------------------
