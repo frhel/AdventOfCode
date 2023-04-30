@@ -28,86 +28,73 @@ let rounds = 30;
 // it with all possible combinations of the unopened valves and then returns
 // the highest value of the best 2 paths that don't share any valves.
 // ----------------------------------------------------------------------------
-function find_best_multiple_paths(valves, start, rounds, path_count) {
+function find_best_multiple_paths(valves, start, rounds) {
     const start_node = valves.get(start);
 
     // Splitting only the unopened valves away from the start node because
     // we don't want to make the start node a part of the combinations
     const unopened = [...valves.entries()].filter((node) => node[1].name !== start);
 
-    // Splitting the unopened valves into two groups. The first group will
-    // the total number of unopened valves divided by the number of paths
-    // floored. The second group will be the total number of unopened valves
-    // divided by the number of paths floored plus the remainder. This gives
-    // us the best possible coverage of the unopened valves for both odd and
-    // even numbers of valves. I did hard code the number of paths to 2 for
-    // this problem, but it could be easily adapted to any number of paths.
-    let splits = [[], []];
-    let split_count = ~~(unopened.length / path_count);
-    let split_mod = unopened.length % path_count;
-    splits[0] = combinations(unopened, split_count);
-    splits[1] = combinations(unopened, split_count + split_mod);
+    // We are going to generate all possible combinations of the unopened
+    // valves, but only half of them (rounded up) because we're going to
+    // combine each of those combinations with the other half of the
+    // original set of valves.
+    let split_count = ~~(unopened.length / 2);
+    let split_mod = unopened.length % 2;
+    splits = combinations(unopened, split_count + split_mod);
 
     // Adding the start node to each of the combinations of unopened valves
     // and then converting the array of nodes into an object containing an
     // array of the node names, and an array of the node objects.
-    for (let i = 0; i < path_count; i++) {
-        for (let j = 0; j < splits[i].length; j++) {
-            splits[i][j].push([start, start_node]);
-            splits[i][j] = {
-                path: splits[i][j].map((node) => node[0]),
-                valves: splits[i][j]
-            };
-        }
+    for (let j = 0; j < splits.length; j++) {
+        splits[j].push([start, start_node]);
+        splits[j] = {
+            path: splits[j].map((node) => node[0]),
+            valves: splits[j]
+        };
     }
 
     // We're just going to dump the results of the combinations function into
     // an array and then sort it by value at the end to get the highest value.
     let best_flow = []
-    let count = 0; // Just to keep track of how many combinations we've run
 
     // We're going to compare all elements of the first group to all elements
     // of the second group. If the two groups share any valves, then we're
     // going to skip that combination. Otherwise, we're going to run the
     // find_most_efficient_path function on each group and then add the
     // results together to get the total flow for that combination.
-    for (let i = 0; i < splits[1].length; i++) {
-        for (let j = 0; j < splits[0].length; j++) {
-            // If the two groups share any valves, then skip this combination
-            // and move on to the next one. We're using the path array that
-            // we created earlier to make this comparison. The reason why we
-            // are checking for a length of 1 is because we know that the
-            // start node is in both groups and will always show up in the
-            // shared array.
-            let shared = splits[1][i].path
-                .filter((node) => splits[0][j].path.includes(node));
-            if (shared.length !== 1) continue
+    for (let i = 0; i < splits.length; i++) {
 
-            // Just to keep track of how many combinations we've run
-            count++;
-            if (count % 1000 === 0) {
-                let delta_time = new Date().getTime() - _start_time;
-                console.log(`${count} in ${delta_time / 1000}s`);
-            }
-
-            // Run the find_most_efficient_path function on each group and
-            // then add the results together to get the total flow for that
-            // combination. We're using the spread operator to convert the
-            // array of node objects into a Map object. Maybe it's something
-            // that I'm doing wrong, but it seems that it's faster than just
-            // passing the array of node objects directly. Also, we are
-            // doing the Map conversions here instead of in the previous
-            // loop because it seems to be faster to do it here. Probably
-            // because we're not doing it for every possible combination.
-            best_flow.push(
-                find_most_efficient_path(
-                    new Map([...splits[1][i].valves]), start, rounds
-                )
-                + find_most_efficient_path(
-                    new Map([...splits[0][j].valves]), start, rounds
-                )
-            );
+        // create a new object that contains all the valves that the
+        // are not in the splits{1][i] object
+        let temp = new Map([...valves]);
+        for (let j = 0; j < splits[i].valves.length; j++) {
+            temp.delete(splits[i].valves[j][0]);
         }
+
+        // Shape the temp object into the same format as the splits[i]
+        temp = {
+            path: [...temp.keys(), start],
+            valves: [...temp.entries(), [start, start_node]]
+        }
+
+        // Run the find_most_efficient_path function on each group and
+        // then add the results together to get the total flow for that
+        // combination. We're using the spread operator to convert the
+        // array of node objects into a Map object. Maybe it's something
+        // that I'm doing wrong, but it seems that it's faster than just
+        // passing the array of node objects directly. Also, we are
+        // doing the Map conversions here instead of in the previous
+        // loop because it seems to be faster to do it here. Probably
+        // because we're not doing it for every possible combination.
+        best_flow.push(
+            find_most_efficient_path(
+                new Map([...splits[i].valves]), start, rounds
+            )
+            + find_most_efficient_path(
+                new Map([...temp.valves]), start, rounds
+            )
+        );
     }
 
     return best_flow.sort((a, b) => b - a)[0];
@@ -369,7 +356,7 @@ console.log(`Starting to solve Part 2 at ${new Date().toLocaleTimeString()}`)
 
 // Actually solve part 2
 rounds = 26;
-let best_multiple_paths = find_best_multiple_paths(valves, start, rounds, 2)
+let best_multiple_paths = find_best_multiple_paths(valves, start, rounds)
 console.log(`Part 2 solution: ${best_multiple_paths}`)
 // Best time so far: 8,8s
 
