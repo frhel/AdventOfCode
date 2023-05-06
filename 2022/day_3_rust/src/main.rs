@@ -2,21 +2,23 @@ use std::fs::File;
 use std::io::{BufRead, BufReader, Lines};
 
 fn main() {
+
     // -----------------------------------------------------------------------------------------------
-
-
     // open the file or panic if it doesn't exist
     let file = File::open("../data/day_3").unwrap_or_else(|error| {
         panic!("Error opening file: {}", error);
     });
 
+    // -----------------------------------------------------------------------------------------------
     // Format the file contents into a vector of strings
     let vec_data = format_file_contents(file);
 
+    // -----------------------------------------------------------------------------------------------
     // Solve part 1
     let part_1_answer = solve_part_1(vec_data.clone());
     println!("Part 1 solution: {}", part_1_answer);
 
+    // -----------------------------------------------------------------------------------------------
     // Solve part 2
     let part_2_answer = solve_part_2(vec_data.clone());
     println!("Part 2 solution: {}", part_2_answer);
