@@ -18,7 +18,7 @@ fn main() {
     // -----------------------------------------------------------------------------------------------
     // create a vector of games from the file. Each game is a tuple of (opponent_move, my_move)
     let games = create_vec_of_games(file);
-    
+
     // -----------------------------------------------------------------------------------------------
     // translate my moves to be a, b, or c instead of x, y, or z
     let translated_games = translate_moves(games, moves_codex);
@@ -71,7 +71,7 @@ fn translate_moves(moves: Vec<(String, String)>, moves_codex: MovesCodex) -> Vec
 /// Calculates the total score for all games
 fn calculate_total_scores(games: &Vec<(String, String)>, score_table: &ScoreTable, win_states: &WinStates) -> i32 {
     let mut accumulator = 0;
-    
+
     // iterate through the games vector
     for game in games {
         let (opponent_move, my_move) = game;
