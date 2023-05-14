@@ -1,9 +1,9 @@
 [workspace]
 members = [
-    "2022/day_1_rust",
-    "2022/day_2_rust",
-    "2022/day_3_rust",
-    "2022/day_4_rust",
-    "2022/day_9_rust",
-    "2022/day_10_rust",
+    "2022/day_1/rust",
+    "2022/day_2/rust",
+    "2022/day_3/rust",
+    "2022/day_4/rust",
+    "2022/day_9/rust",
+    "2022/day_10/rust",
 ]
