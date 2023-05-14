@@ -5,7 +5,7 @@
 
 // -------------------------------- Imports -----------------------------------
 const fs = require('fs');
-const { ____ } = require('lodash');
+let { Queue } = require('../js_libs/queue.js');
 
 // Read in the contents of the data file and store it as an array of strings
 // where each string is obtained by splitting the input string on the newline
@@ -213,33 +213,7 @@ function combinations(arr, len) {
     return result;
 }
 
-// Set up a Queue class to use for the BFS algorithm
-class Queue {
-    constructor() {
-      this.elements = {};
-      this.head = 0;
-      this.tail = 0;
-    }
-    enqueue(element) {
-      this.elements[this.tail] = element;
-      this.tail++;
-    }
-    dequeue() {
-      const item = this.elements[this.head];
-      delete this.elements[this.head];
-      this.head++;
-      return item;
-    }
-    peek() {
-      return this.elements[this.head];
-    }
-    get length() {
-      return this.tail - this.head;
-    }
-    get isEmpty() {
-      return this.length === 0;
-    }
-  }
+
 
 // ----------------------------------------------------------------------------
 // --------------------------- Setup Functions --------------------------------
@@ -282,10 +256,11 @@ function generate_shortest_paths(valves, start) {
         if (valve[0] === start || valve[1].rate === 0) continue;
 
         let visited = [];
-        let queue = [start];
+        let queue = new Queue();
+        queue.enqueue(start);
         let path = [];
-        while (queue.length > 0) {
-            let curr_valve = queue.shift();
+        while (!queue.isEmpty) {
+            let curr_valve = queue.dequeue();
             let curr = valves.find(valve => valve[0] === curr_valve);
             let curr_tunnels = curr[1].tunnels;
 
@@ -301,7 +276,7 @@ function generate_shortest_paths(valves, start) {
             for (let tunnel of curr_tunnels) {
                 if (visited.includes(tunnel)) continue;
                 path.push([tunnel, curr_valve]);
-                queue.push(tunnel);
+                queue.enqueue(tunnel);
             }
 
             visited.push(curr_valve);
