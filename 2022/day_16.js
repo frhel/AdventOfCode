@@ -43,20 +43,9 @@ function find_best_multiple_paths(valves, start, rounds) {
     let split_mod = unopened.length % 2;
     splits = combinations(unopened, split_count + split_mod);
 
-    // Adding the start node to each of the combinations of unopened valves
-    // and then converting the array of nodes into an object containing an
-    // array of the node names, and an array of the node objects.
-    for (let j = 0; j < splits.length; j++) {
-        splits[j].push([start, start_node]);
-        splits[j] = {
-            path: splits[j].map((node) => node[0]),
-            valves: splits[j]
-        };
-    }
-
     // We're just going to dump the results of the combinations function into
     // an array and then sort it by value at the end to get the highest value.
-    let best_flow = []
+    let best_flow = [];
 
     // We're going to compare all elements of the first group to all elements
     // of the second group. If the two groups share any valves, then we're
@@ -67,15 +56,12 @@ function find_best_multiple_paths(valves, start, rounds) {
 
         // create a new object that contains all the valves that the
         // are not in the splits{1][i] object
-        let temp = new Map([...valves]);
-        for (let j = 0; j < splits[i].valves.length; j++) {
-            temp.delete(splits[i].valves[j][0]);
-        }
-
-        // Shape the temp object into the same format as the splits[i]
-        temp = {
-            path: [...temp.keys(), start],
-            valves: [...temp.entries(), [start, start_node]]
+        let temp = unopened.slice();
+        for (let j = 0; j < splits[i].length; j++) {
+            let index = temp.findIndex((node) => node[0] === splits[i][j][1].name);
+            if (index > -1) {
+                temp.splice(index, 1);
+            }
         }
 
         // Run the find_most_efficient_path function on each group and
@@ -89,16 +75,15 @@ function find_best_multiple_paths(valves, start, rounds) {
         // because we're not doing it for every possible combination.
         best_flow.push(
             find_most_efficient_path(
-                new Map([...splits[i].valves]), start, rounds
+                new Map([...splits[i], [start, start_node]]), start, rounds
             )
             + find_most_efficient_path(
-                new Map([...temp.valves]), start, rounds
+                new Map([...temp, [start, start_node]]), start, rounds
             )
         );
     }
 
     return best_flow.sort((a, b) => b - a)[0];
-
 }
 
 // This is the solution to Part 1. It uses a depth first search to find the
@@ -108,10 +93,10 @@ function find_best_multiple_paths(valves, start, rounds) {
 // to optimize it, and this is the best that I've come up with so far.
 // ----------------------------------------------------------------------------
 function find_most_efficient_path(valves, start, rounds) {
-    let stack = [];
-    stack.push({
+    let queue = new Queue();
+    queue.enqueue({
         node: valves.get(start),
-        visited: [start],
+        visited: [],
         calculated: {
             steps: 0,
             flow_rate: 0,
@@ -119,9 +104,10 @@ function find_most_efficient_path(valves, start, rounds) {
             total_flow: 0
         }
     });
-    let winner = stack[0];
-    while (stack.length > 0) {
-        let current = stack.pop();
+
+    let winner = queue.peek();
+    while (!queue.isEmpty) {
+        let current = queue.dequeue();
 
         // Using a visited array on the current node object because we want
         // each branch to track its own visited nodes. We want to be able to
@@ -170,7 +156,7 @@ function find_most_efficient_path(valves, start, rounds) {
             // with a bunch of nodes that have the same visited array.
             // I originally used lodash cloneDeep to do this, but it was
             // VERY slow in comparison to just using the slice method.
-            stack.push({
+            queue.enqueue({
                 node: edge,
                 visited: current.visited.slice(),
                 calculated: new_calculated
@@ -226,6 +212,34 @@ function combinations(arr, len) {
     }
     return result;
 }
+
+// Set up a Queue class to use for the BFS algorithm
+class Queue {
+    constructor() {
+      this.elements = {};
+      this.head = 0;
+      this.tail = 0;
+    }
+    enqueue(element) {
+      this.elements[this.tail] = element;
+      this.tail++;
+    }
+    dequeue() {
+      const item = this.elements[this.head];
+      delete this.elements[this.head];
+      this.head++;
+      return item;
+    }
+    peek() {
+      return this.elements[this.head];
+    }
+    get length() {
+      return this.tail - this.head;
+    }
+    get isEmpty() {
+      return this.length === 0;
+    }
+  }
 
 // ----------------------------------------------------------------------------
 // --------------------------- Setup Functions --------------------------------
