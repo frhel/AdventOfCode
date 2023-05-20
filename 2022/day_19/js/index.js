@@ -16,7 +16,7 @@ const input = fs.readFileSync(file_data, 'utf-8')
 
 // ----------------------------------------------------------------------------
 // Shape data into a more convenient form
-let bps = form_data(input);
+const bps = form_data(input);
 
 let _priority = [];
 
@@ -28,7 +28,7 @@ console.time('Total time');
 console.time('Part 1 time');
 let rounds = 24;
 let _part = 1;
-let part1 = solve_1(bps, rounds);
+const part1 = solve_1(bps, rounds);
 console.log(`Part 1: ${part1}`);
 console.timeEnd('Part 1 time');
 // Answer: 1.349
@@ -50,8 +50,8 @@ console.timeEnd('Total time');
 // ------------------------------- Solution ----------------------------------
 function solve_1(bps, rounds) {
     let total_quality = 0;
-    for (let bp of bps) {
-        let max_geodes = run_simulation(bp, rounds, bps.indexOf(bp) + 1);
+    for (const bp of bps) {
+        const max_geodes = run_simulation(bp, rounds, bps.indexOf(bp) + 1);
         total_quality += max_geodes.bp_nr * max_geodes.geodes;
     }
     return total_quality;    
@@ -59,8 +59,8 @@ function solve_1(bps, rounds) {
 
 function solve_2(bps, rounds) {
     let all_geodes = [];
-    for (let bp of bps.slice(0, 3)) {
-        let max_geodes = run_simulation(bp, rounds, bps.indexOf(bp) + 1);
+    for (const bp of bps.slice(0, 3)) {
+        const max_geodes = run_simulation(bp, rounds, bps.indexOf(bp) + 1);
         all_geodes.push(max_geodes.geodes);
     }
     console.log(all_geodes);
@@ -68,12 +68,8 @@ function solve_2(bps, rounds) {
 }
 
 function run_simulation(bp, rounds, bp_nr) {
-    let count = 0;
-    //rounds = 5;
     let winner = setup_bank();
     _priority = ['ore', 'clay', 'obsidian', 'geode'];
-
-    let max = [winner];
 
     // Find the max number of each resource needed to be able to build 1 robot
     // of any type per round
@@ -103,9 +99,8 @@ function run_simulation(bp, rounds, bp_nr) {
                     curr_bank.bot_types.splice(i, 1);
                     i--;
                 }
-
 ///// This is the hackiest hack that ever hacked. It's so shit. It just plays well with my input. Magic.
-///// Does not work for part 1 at all.
+///// Does not work for part 1 at all. Without it, part 2 runs in like 2 minutes intead of 200ms...
                 if (_part === 2) {
                     if (curr_bank.bot_types[i] === 'ore' && rounds - curr_bank.time < 24) {
                         curr_bank.bot_types.splice(i, 1);
@@ -125,7 +120,7 @@ function run_simulation(bp, rounds, bp_nr) {
         }
         
 
-        // Push the current bank to the max array to sort later
+        // Keep the current branch as winner if it produces more geodes in total.
         if (curr_bank.resources.geode > 0) {
             if (curr_bank.resources.geode + curr_bank.robots.geode * (rounds - curr_bank.time) > winner.resources.geode) {
                 winner = collect_until_end(curr_bank, rounds - curr_bank.time);
@@ -136,18 +131,13 @@ function run_simulation(bp, rounds, bp_nr) {
         if (curr_bank.time >= rounds) continue;
 
         // Get the list of robots that can be built and how long until they can be built
-        let buildable = get_buildable_robots(bp, curr_bank, rounds);          
-        
+        const buildable = get_buildable_robots(bp, curr_bank, rounds);                  
 
         // Build each robot that can be built
         for (let type of buildable) {
             let new_bank = copy_bank(curr_bank);          
 
             if (type.rounds < 1 || new_bank.time + type.rounds > rounds ) continue;
-
-            if (type.name === 'geode' && new_bank.robots.geode === 0) {
-                new_bank.ttg = type.rounds + new_bank.time;
-            }
             
             new_bank.time += type.rounds;
             new_bank.history.push(new_bank.time + ' ' + type.name);
@@ -170,22 +160,24 @@ function run_simulation(bp, rounds, bp_nr) {
 function get_buildable_robots(bp, bank, total_rounds) {    
     // check which robots can be build with the new resources
     // check which bots we can not build right now
-    let robots = bank.bot_types;
+    const types = bank.bot_types;
     
     // Check how many rounds until we can build the next big robot if we just collect
     // with regards to our ore income and status
-    let retObjs = [];
-    for (let type of robots) {
+    const buildable = [];
+    for (const type of types) {
         let rounds = 0;
-        for (let cost of bp[type]) {
+        for (const cost of bp[type]) {            
             // How many rounds until we can build this robot if we just collect
-            if (bank.robots[cost.name] === 0) {
+            const resources = bank.resources;
+            const robots = bank.robots;
+            if (robots[cost.name] === 0) {
                 rounds = 0;
                 break;
             }
 
             if (bank.resources[cost.name] < cost.amount) {                
-                    rounds_until_build = Math.ceil((cost.amount - bank.resources[cost.name]) / bank.robots[cost.name] + 1);
+                    rounds_until_build = Math.ceil((cost.amount - resources[cost.name]) / robots[cost.name] + 1);
                 
                 if (bank.time + rounds_until_build >= total_rounds) {
                     rounds = 0;
@@ -193,17 +185,14 @@ function get_buildable_robots(bp, bank, total_rounds) {
                 } else if (rounds_until_build >= rounds) {
                     rounds = rounds_until_build;
                 }
-            } else if (rounds === 0 && bank.resources[cost.name] >= cost.amount) {
+            } else if (rounds === 0 && resources[cost.name] >= cost.amount) {
                 rounds = 1;
             }
         }        
-        // console.log(bank)
-        if (type === 'obsidian' && bank.history.length === 7 && bank.history.join('') === '1 c2 c3 clay4 c5 clay6 c7 clay')
-            console.log(type, rounds)
-        retObjs.push({name: type, rounds: rounds});
+        
+        buildable.push({name: type, rounds: rounds});
     }
-    
-    return retObjs;
+    return buildable;
 }
 
 function collect_until_end(new_bank, rounds) {
@@ -213,45 +202,44 @@ function collect_until_end(new_bank, rounds) {
 }
 
 function add_bank_resources(bank, rounds) {
-    for (let [robo, amount] of Object.entries(bank.robots)) {
-        bank.resources[robo] += amount * rounds;
-    }
-
+    bank.resources.ore += bank.robots.ore * rounds;
+    bank.resources.clay += bank.robots.clay * rounds;
+    bank.resources.obsidian += bank.robots.obsidian * rounds;
+    bank.resources.geode += bank.robots.geode * rounds;
     return bank;
 }
 
 function pay_robot_build_cost(bp, bank, type) {
      // Subtract the cost of the new robot
-     for (let [robo, cost] of Object.entries(bp[type])) {
+     for (const cost of Object.values(bp[type])) {
         bank.resources[cost.name] -= cost.amount;
     }
 
     return bank;
 }
 
-    
-
-// ----------------------------------- Setup ----------------------------------
 function copy_bank(bank) {
-    let new_bank = {
-        resources: {},
-        robots: {},
+    const new_bank = {
+        resources: {
+            ore: bank.resources.ore,
+            clay: bank.resources.clay,
+            obsidian: bank.resources.obsidian,
+            geode: bank.resources.geode,
+        },
+        robots: {
+            ore: bank.robots.ore,
+            clay: bank.robots.clay,
+            obsidian: bank.robots.obsidian,
+            geode: bank.robots.geode,
+        },
         time: bank.time,
         bot_types: bank.bot_types.slice(),
-        history: [...bank.history],
-        ttg: bank.ttg
-    }
-
-    // Create the new bank manually for a deep copy
-    for(let [name, amount] of Object.entries(bank.resources)) {
-        new_bank.resources[name] = amount;
-    }
-    for(let [name, amount] of Object.entries(bank.robots)) {
-        new_bank.robots[name] = amount;
+        history: bank.history.slice(),
     }
     return new_bank;
-}
+}   
 
+// ----------------------------------- Setup ----------------------------------
 // Shape the data into a more convenient form
 // Line example: Blueprint 1: Each ore robot costs 4 ore. Each clay robot costs 2 ore. Each obsidian robot costs 3 ore and 14 clay. Each geode robot costs 2 ore and 7 obsidian.
 function form_data(input) {
@@ -285,7 +273,7 @@ function form_data(input) {
 }
 
 function setup_bank() {
-    let bank = {
+    const bank = {
         resources: {
             'ore': 0,
             'clay': 0,
@@ -301,7 +289,6 @@ function setup_bank() {
         time: 0,
         bot_types: _priority.slice(),
         history: [],
-        ttg: Infinity
     }
     return bank;
 }
