@@ -6,6 +6,7 @@
 // -------------------------------- Imports -----------------------------------
 const fs = require('fs');
 const { Queue } = require('../../libs/queue.js');
+const { match } = require('assert');
 
 // Read in the contents of the data file and store it as an array of strings
 // where each string is obtained by splitting the input string on the newline
@@ -17,6 +18,8 @@ const input = fs.readFileSync(file_data, 'utf-8')
 // ----------------------------------------------------------------------------
 // Shape data into a more convenient form
 const bps = form_data(input);
+
+console.log(bps[0].clay)
 
 let _priority = [];
 
@@ -63,12 +66,11 @@ function solve_2(bps, rounds) {
         const max_geodes = run_simulation(bp, rounds, bps.indexOf(bp) + 1);
         all_geodes.push(max_geodes.geodes);
     }
-    console.log(all_geodes);
     return all_geodes.reduce((a, b) => a * b);
 }
 
 function run_simulation(bp, rounds, bp_nr) {
-    let winner = setup_bank();
+    let winner = 0;
     _priority = ['ore', 'clay', 'obsidian', 'geode'];
 
     // Find the max number of each resource needed to be able to build 1 robot
@@ -81,51 +83,58 @@ function run_simulation(bp, rounds, bp_nr) {
             }
         }
     }
+
+    let [ore_limit, clay_limit, obsidian_limit] = [18, 5, 1];
+    if (_part === 2) [ore_limit, clay_limit, obsidian_limit] = [24, 11, 7];
+    let [ore_ratio, clay_ratio, obsidian_ratio] = [3, 1.5, 1.2];
+    if (_part === 2) [ore_ratio, clay_ratio, obsidian_ratio] = [3, 2, 1.5];
     
     let queue = new Queue();
     queue.enqueue(setup_bank());
 
-    console.time('Search timer');
     while (!queue.isEmpty) {
         let curr_bank = queue.dequeue();       
 
-        if (curr_bank.resources.ore > max_ore_costs.ore * 3 && curr_bank.robots.geode < 1) continue;
-        if (curr_bank.resources.clay > max_ore_costs.clay * 2 && curr_bank.robots.geode < 1) continue;
-        if (curr_bank.resources.obsidian > max_ore_costs.obsidian * 1.5) continue;
+
+        //  .·:*¨༺ ༻¨*:·.      .·:*¨༺ ༻¨*:·.      .·:*¨༺ ༻¨*:·.
+        // ░M░A░G░I░C░      ░H░A░P░P░E░N░S░      ░H░E░R░E░
+        //  `·.¸¸.·´¯`·.¸¸.❤   `·.¸¸.·´¯`·.¸¸.❤   `·.¸¸.·´¯`·.¸¸.❤
+
+
+        // These checks are to make sure we don't waste time on branches that start holding
+        // too many resources. This is a huge time saver. Magic number ratios are different
+        // for parts 1 and 2. 
+        // The ratio for part 2 also works for part 1 as a more general solution.
+        if (curr_bank.resources.ore > max_ore_costs.ore * ore_ratio && curr_bank.robots.geode < 1) continue;
+        if (curr_bank.resources.clay > max_ore_costs.clay * clay_ratio && curr_bank.robots.geode < 1) continue;
+        if (curr_bank.resources.obsidian > max_ore_costs.obsidian * obsidian_ratio) continue;
 
         if (curr_bank.bot_types.length > 1) {
             for (let i = 0; i < curr_bank.bot_types.length; i++) {
-                if (curr_bank.bot_types[i] !== 'geode' && curr_bank.robots[curr_bank.bot_types[i]] >= max_ore_costs[curr_bank.bot_types[i]]) {
-                    curr_bank.bot_types.splice(i, 1);
-                    i--;
-                }
-///// This is the hackiest hack that ever hacked. It's so shit. It just plays well with my input. Magic.
-///// Does not work for part 1 at all. Without it, part 2 runs in like 2 minutes intead of 200ms...
-                if (_part === 2) {
-                    if (curr_bank.bot_types[i] === 'ore' && rounds - curr_bank.time < 24) {
-                        curr_bank.bot_types.splice(i, 1);
-                        i--;
-                    }
-                    if (curr_bank.bot_types[i] === 'clay' && rounds - curr_bank.time < 11) {
-                        curr_bank.bot_types.splice(i, 1);
-                        i--;
-                    }
-                    if (curr_bank.bot_types[i] === 'obsidian' && rounds - curr_bank.time < 7) {
-                        curr_bank.bot_types.splice(i, 1);
-                        i--;
-                    }
-                }
-////// End hacky hack                
-            }
-        }
-        
+                // This commented out code is a general solution that works for all inputs. What comes after isn't.
+                // if (curr_bank.bot_types[i] !== 'geode' && curr_bank.robots[curr_bank.bot_types[i]] >= max_ore_costs[curr_bank.bot_types[i]]) {
+                //     curr_bank.bot_types.splice(i, 1); i--; }                
 
-        // Keep the current branch as winner if it produces more geodes in total.
-        if (curr_bank.resources.geode > 0) {
-            if (curr_bank.resources.geode + curr_bank.robots.geode * (rounds - curr_bank.time) > winner.resources.geode) {
-                winner = collect_until_end(curr_bank, rounds - curr_bank.time);
+                // This is the hackiest hack that ever hacked. It's so bad. It just plays well with my input. Magic.
+                // Different magic for parts 1 and 2. Without it, part 2 runs in like 2 minutes intead of 200ms..
+                // Definitely not a general solution.
+                if (curr_bank.bot_types[i] === 'ore' && rounds - curr_bank.time < ore_limit)
+                    curr_bank.bot_types.splice(i--, 1)
+                if (curr_bank.bot_types[i] === 'clay' && rounds - curr_bank.time < clay_limit)
+                    curr_bank.bot_types.splice(i--, 1)
+                if (curr_bank.bot_types[i] === 'obsidian' && rounds - curr_bank.time < obsidian_limit)
+                    curr_bank.bot_types.splice(i--, 1)
+                // End hacky hack                
             }
         }
+
+        //  .·:*¨༺ ༻¨*:·.      .·:*¨༺ ༻¨*:·.      .·:*¨༺ ༻¨*:·.
+        // ░M░A░G░I░C░      ░E░N░D░S░      ░H░E░R░E░
+        //  `·.¸¸.·´¯`·.¸¸.❤   `·.¸¸.·´¯`·.¸¸.❤   `·.¸¸.·´¯`·.¸¸.❤
+
+        // Keep track of the winning score
+        if (curr_bank.resources.geode > 0)
+            winner = Math.max(winner, calc_max_geodes(curr_bank, rounds));
 
         // It doesn't matter if we build a robot in the last round so we can skip it
         if (curr_bank.time >= rounds) continue;
@@ -137,24 +146,26 @@ function run_simulation(bp, rounds, bp_nr) {
         for (let type of buildable) {
             let new_bank = copy_bank(curr_bank);          
 
-            if (type.rounds < 1 || new_bank.time + type.rounds > rounds ) continue;
+            if (new_bank.time + type.rounds > rounds ) continue;
             
             new_bank.time += type.rounds;
-            new_bank.history.push(new_bank.time + ' ' + type.name);
             new_bank = add_bank_resources(new_bank, type.rounds);
             new_bank = pay_robot_build_cost(bp, new_bank, type.name);            
 
             // Add the new robot so it can collect resources next round
-            new_bank.robots[type.name] += 1;           
+            new_bank.robots[type.name]++;           
             
             queue.enqueue(new_bank);
         }
     }
-    console.timeEnd('Search timer');
     return {
-        geodes: winner.resources.geode,
+        geodes: winner,
         bp_nr: bp_nr
     };
+}
+
+function calc_max_geodes(bank, rounds) {
+    return bank.resources.geode + bank.robots.geode * (rounds - bank.time);
 }
 
 function get_buildable_robots(bp, bank, total_rounds) {    
@@ -167,41 +178,27 @@ function get_buildable_robots(bp, bank, total_rounds) {
     const buildable = [];
     for (const type of types) {
         let rounds = 0;
-        for (const cost of bp[type]) {            
-            // How many rounds until we can build this robot if we just collect
-            const resources = bank.resources;
-            const robots = bank.robots;
-            if (robots[cost.name] === 0) {
-                rounds = 0;
-                break;
-            }
+        bp_type = bp[type];
+        if (type === 'geode' || type === 'obsidian')
+            if (bank.robots[bp_type[1].name] === 0)
+                continue;
+            else 
+                rounds = Math.ceil((bp_type[1].amount - bank.resources[bp_type[1].name]) / bank.robots[bp_type[1].name] + 1);
 
-            if (bank.resources[cost.name] < cost.amount) {                
-                    rounds_until_build = Math.ceil((cost.amount - resources[cost.name]) / robots[cost.name] + 1);
-                
-                if (bank.time + rounds_until_build >= total_rounds) {
-                    rounds = 0;
-                    break;
-                } else if (rounds_until_build >= rounds) {
-                    rounds = rounds_until_build;
-                }
-            } else if (rounds === 0 && resources[cost.name] >= cost.amount) {
-                rounds = 1;
-            }
-        }        
-        
-        buildable.push({name: type, rounds: rounds});
+        if (bank.resources.ore >= bp_type[0].amount && rounds === 0)
+            rounds = 1;
+        else 
+            rounds = Math.max(Math.ceil((bp_type[0].amount - bank.resources.ore) / bank.robots.ore + 1), rounds);
+       
+        if (rounds > 0)
+            buildable.push({name: type, rounds: rounds});
     }
     return buildable;
 }
 
-function collect_until_end(new_bank, rounds) {
-    bank = copy_bank(new_bank);
-    bank = add_bank_resources(bank, rounds);
-    return bank
-}
 
 function add_bank_resources(bank, rounds) {
+    // Verbose is much faster than a loop
     bank.resources.ore += bank.robots.ore * rounds;
     bank.resources.clay += bank.robots.clay * rounds;
     bank.resources.obsidian += bank.robots.obsidian * rounds;
@@ -210,11 +207,13 @@ function add_bank_resources(bank, rounds) {
 }
 
 function pay_robot_build_cost(bp, bank, type) {
-     // Subtract the cost of the new robot
-     for (const cost of Object.values(bp[type])) {
-        bank.resources[cost.name] -= cost.amount;
-    }
+    // Everything costs ore
+    bank.resources.ore -= bp[type][0].amount;
 
+    // Clay and obsidian cost ore + another resource
+    if (type === 'obsidian' || type === 'geode')
+        bank.resources[bp[type].at(-1).name] -= bp[type].at(-1).amount;
+    
     return bank;
 }
 
@@ -234,7 +233,6 @@ function copy_bank(bank) {
         },
         time: bank.time,
         bot_types: bank.bot_types.slice(),
-        history: bank.history.slice(),
     }
     return new_bank;
 }   
@@ -250,21 +248,9 @@ function form_data(input) {
         let data = line.split(': ')[1].split('. ');
         for (let item of data) {
             item = item.split(' ');
-            let cost = [
-                {
-                    'name': item[5],
-                    'amount': item[4]*1
-                }
-            ]
-            if (item.length > 6) {
-                cost.push(
-                    {
-                        'name': item[8],
-                        'amount': item[7]*1
-                    }
-                )
-                
-            }
+            let cost = [{ 'name': item[5], 'amount': item[4]*1 }]
+            if (item.length > 6)
+                cost.push({'name': item[8], 'amount': item[7]*1 })
             bp[item[1]] = cost;
         }
         bps.push(bp);
@@ -274,21 +260,11 @@ function form_data(input) {
 
 function setup_bank() {
     const bank = {
-        resources: {
-            'ore': 0,
-            'clay': 0,
-            'obsidian': 0,
-            'geode': 0
-        },
-        robots: {
-            'ore': 1,
-            'clay': 0,
-            'obsidian': 0,
-            'geode': 0
-        },
+        resources: { 'ore': 0, 'clay': 0, 'obsidian': 0, 'geode': 0 },
+        robots: { 'ore': 1, 'clay': 0, 'obsidian': 0, 'geode': 0 },
         time: 0,
         bot_types: _priority.slice(),
-        history: [],
+        max_geodes: 0
     }
     return bank;
 }
