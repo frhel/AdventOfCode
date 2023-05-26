@@ -77,42 +77,42 @@ function solve(input, node_name) {
       has_human: false
    };
 
-   // If the node has a number, we have reached a leaf node and can return it.
+   // If the node has a number, we have reached a leaf node and can return it early
    if (node.num > -Infinity) {
       // Gotta check if we have reached humn so we can track the path back to it later
       if (node.name === 'humn') node.has_human = true;
       return node;
-   } else {
-      // Recursive call to get the left and right nodes of the current node
-      node.left = solve(input, node.left.name);
-      node.right = solve(input, node.right.name);
-      
-      // use eval() to evaluate the operation and assign the resulting value to the current node
-      node.num = Number(eval(`${node.left.num} ${node.operation} ${node.right.num}`));
-
-      // Keep track of whether the current branch has humn in it
-      if (node.left.has_human || node.right.has_human) {
-         node.has_human = true;
-      }
-      
-      // If we're back to the root node, we can call track_human_path() to get the answer for part 2
-      // Or just return the value for Part 1. Since we can reuse the output from Part 1 for Part 2,
-      // we can just save the value for Part 1 in a return object, continue on solving for Part 2,
-      // and then return the object with both answers at the end.
-      if (node.name === 'root') {
-         // Save the part 1 answer
-         let answers = {part1: node.num}
-         
-         // Solve for part 2 with the tree object we have built
-         let nr_to_match = node.left.has_human ? node.right.num : node.left.num;
-         let humn_branch = node.left.has_human ? node.left : node.right;
-
-         // Save the result of track_human_path() in the return object and return it
-         answers.part2 = track_human_path(humn_branch, nr_to_match);
-         return answers;
-      }
-      return node
    }
+
+   // Recursive call to get the left and right nodes of the current node
+   node.left = solve(input, node.left.name);
+   node.right = solve(input, node.right.name);
+   
+   // use eval() to evaluate the operation and assign the resulting value to the current node
+   node.num = Number(eval(`${node.left.num} ${node.operation} ${node.right.num}`));
+
+   // Keep track of whether the current branch has humn in it
+   if (node.left.has_human || node.right.has_human) {
+      node.has_human = true;
+   }
+   
+   // If we're back to the root node, we can call track_human_path() to get the answer for part 2
+   // Or just return the value for Part 1. Since we can reuse the output from Part 1 for Part 2,
+   // we can just save the value for Part 1 in a return object, continue on solving for Part 2,
+   // and then return the object with both answers at the end.
+   if (node.name === 'root') {
+      // Save the part 1 answer
+      let answers = {part1: node.num}
+      
+      // Solve for part 2 with the tree object we have built
+      let nr_to_match = node.left.has_human ? node.right.num : node.left.num;
+      let humn_branch = node.left.has_human ? node.left : node.right;
+
+      // Save the result of track_human_path() in the return object and return it
+      answers.part2 = track_human_path(humn_branch, nr_to_match);
+      return answers;
+   }
+   return node
 }
 
 
