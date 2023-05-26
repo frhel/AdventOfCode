@@ -96,11 +96,9 @@ function run_simulation(bp, rounds, bp_nr) {
         let curr_bank = queue.dequeue();       
 
 
-        //  .·:*¨༺ ༻¨*:·.      .·:*¨༺ ༻¨*:·.      .·:*¨༺ ༻¨*:·.
-        // ░M░A░G░I░C░      ░H░A░P░P░E░N░S░      ░H░E░R░E░
+        //   .·:*¨༺ ༻¨*:·.     .·:*¨༺ ༻¨*:·.      .·:*¨༺ ༻¨*:·.
+        //     ░M░A░G░I░C░       ░H░A░P░P░E░N░S░        ░H░E░R░E░
         //  `·.¸¸.·´¯`·.¸¸.❤   `·.¸¸.·´¯`·.¸¸.❤   `·.¸¸.·´¯`·.¸¸.❤
-
-
         // These checks are to make sure we don't waste time on branches that start holding
         // too many resources. This is a huge time saver. Magic number ratios are different
         // for parts 1 and 2. 
@@ -127,9 +125,8 @@ function run_simulation(bp, rounds, bp_nr) {
                 // End hacky hack                
             }
         }
-
-        //  .·:*¨༺ ༻¨*:·.      .·:*¨༺ ༻¨*:·.      .·:*¨༺ ༻¨*:·.
-        // ░M░A░G░I░C░      ░E░N░D░S░      ░H░E░R░E░
+        //   .·:*¨༺ ༻¨*:·.     .·:*¨༺ ༻¨*:·.      .·:*¨༺ ༻¨*:·.
+        //     ░M░A░G░I░C░          ░E░N░D░S░          ░H░E░R░E░
         //  `·.¸¸.·´¯`·.¸¸.❤   `·.¸¸.·´¯`·.¸¸.❤   `·.¸¸.·´¯`·.¸¸.❤
 
         // Keep track of the winning score
