@@ -18,7 +18,7 @@ const _input = fs.readFileSync(file_data, 'utf-8')
 const input = parse_input(_input);
 const node_name = 'root';
 
-_inverse = {
+const _inverse = {
    '-': '+',
    '+': '-',
    '*': '/',
