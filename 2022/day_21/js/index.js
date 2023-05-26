@@ -96,23 +96,24 @@ function solve(input, node_name) {
       node.has_human = true;
    }
    
+   // We can return early if we're still building the tree
+   if (node.name !== 'root') return node;
+
    // If we're back to the root node, we can call track_human_path() to get the answer for part 2
    // Or just return the value for Part 1. Since we can reuse the output from Part 1 for Part 2,
    // we can just save the value for Part 1 in a return object, continue on solving for Part 2,
-   // and then return the object with both answers at the end.
-   if (node.name === 'root') {
-      // Save the part 1 answer
-      let answers = {part1: node.num}
+   // and then return the object with both answers at the end
+   
+   // Save the part 1 answer
+   let answers = {part1: node.num}
       
-      // Solve for part 2 with the tree object we have built
-      let nr_to_match = node.left.has_human ? node.right.num : node.left.num;
-      let humn_branch = node.left.has_human ? node.left : node.right;
+   // Solve for part 2 with the tree object we have built
+   let nr_to_match = node.left.has_human ? node.right.num : node.left.num;
+   let humn_branch = node.left.has_human ? node.left : node.right;
 
-      // Save the result of track_human_path() in the return object and return it
-      answers.part2 = track_human_path(humn_branch, nr_to_match);
-      return answers;
-   }
-   return node
+   // Save the result of track_human_path() in the return object and return it
+   answers.part2 = track_human_path(humn_branch, nr_to_match);
+   return answers;
 }
 
 
