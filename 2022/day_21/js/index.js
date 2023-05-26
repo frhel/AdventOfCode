@@ -30,9 +30,11 @@ const solution_start = performance.now();
 let answer = solve(input.slice(), node_name);
 // -------------------------------- Part 1 -----------------------------------
 console.log(`Part 1 answer: ${answer.part1}`);
+// Answer: 155708040358220
 
 // -------------------------------- Part 2 -----------------------------------
 console.log(`Part 2 answer: ${answer.part2}`);
+// Answer: 3342154812537
 
 console.log(`Solution completed in ${(performance.now() - solution_start).toFixed(2)}ms`);
 
