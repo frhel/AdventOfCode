@@ -103,7 +103,7 @@ function solve(input, node_name) {
    // Or just return the value for Part 1. Since we can reuse the output from Part 1 for Part 2,
    // we can just save the value for Part 1 in a return object, continue on solving for Part 2,
    // and then return the object with both answers at the end
-   
+
    // Save the part 1 answer
    let answers = {part1: node.num}
       
@@ -121,13 +121,10 @@ function solve(input, node_name) {
 // to get the number that humn would have had to enter to get to the root node
 function track_human_path(node, tracked_number) {
    // If we have reached the humn node, return the answer.
-   if (node.name === 'humn') {
-      return tracked_number;
-   }
+   if (node.name === 'humn') return tracked_number;
 
    // Check which node in the tree we need to evaluate next.
    let humn_side = node.left.has_human ? node.left : node.right;
-   // console.log(node.left.has_human, node.left.num, node.operation, node.right.num, node.right.has_human)
 
    // Check which side of the node we need to evaluate next.
    let side = node.left.has_human ? 'left' : 'right';
@@ -153,8 +150,6 @@ function track_human_path(node, tracked_number) {
          tracked_number = eval(`${node.left.num} ${node.operation} ${node.right.num}`);
       }
    }
-
-
    
    // Recursively call the function with the next node and the new tracked number.
    return track_human_path(humn_side, tracked_number);
