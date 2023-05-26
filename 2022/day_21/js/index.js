@@ -58,6 +58,7 @@ console.log(`Solution completed in ${(performance.now() - solution_start).toFixe
 // The track_human_path() function traverses the tree back to the humn node
 // and reverses the operations to get the number that humn would have had to
 
+// --------------------------------------------------------------------------
 function solve(input, node_name) {
    let curr_line = input[input.findIndex(line => line[0] === node_name)];
 
