@@ -27,8 +27,10 @@ console.log(`Part 1 answer: ${part1_answer}`);
 
 // Takes the map and the instructions
 function solve_part_1(map, instr) {
-   // Starting position and direction
-   let pos = [0, map[1].indexOf('.')];
+   // Starting position and direction, top right corner facing right.
+   // Doesn't matter that we start outside the map since we will wrap around
+   // to find the first available position anyway
+   let pos = [0, 0];
    let dir = 'r';
    // Reversing the instructions makes it so I can just pop off the last
    instr = instr.reverse();
