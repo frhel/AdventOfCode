@@ -155,6 +155,7 @@ function track_human_path(node, tracked_number) {
    return track_human_path(humn_side, tracked_number);
 }
 
+
 // ----------------------------- Helper functions ----------------------------
 // Parse the input data into a more convenient format
 function parse_input(input) {
