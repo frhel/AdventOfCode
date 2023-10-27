@@ -6,6 +6,7 @@
 // -------------------------------- Imports -----------------------------------
 const fs = require('fs');
 let { Queue } = require('../../libs/queue.js');
+let { PQueue } = require('../../libs/priority_queue.js');
 
 // Read in the contents of the data file and store it as an array of strings
 // where each string is obtained by splitting the input string on the newline
@@ -16,8 +17,9 @@ const input = fs.readFileSync(file_data, 'utf-8')
     .replace(/\r/g, "").trim().split('\n');
 
 // --------------------------------- Setup ------------------------------------
-let valves = generate_valves_map(input);
-let start = 'AA';
+const start_node_name = 'AA';
+const valves = generate_valves_map(input);
+const start_node = valves.find(valve => valve.name === start_node_name);
 let rounds = 30;
 
 // ----------------------------------------------------------------------------
@@ -28,57 +30,34 @@ let rounds = 30;
 // it with all possible combinations of the unopened valves and then returns
 // the highest value of the best 2 paths that don't share any valves.
 // ----------------------------------------------------------------------------
-function find_best_multiple_paths(valves, start, rounds) {
-    const start_node = valves.get(start);
-
-    // Splitting only the unopened valves away from the start node because
-    // we don't want to make the start node a part of the combinations
-    const unopened = [...valves.entries()].filter((node) => node[1].name !== start);
-
+function find_best_multiple_paths(unopened, start_node, rounds) {
+    unopened = unopened.filter(valve => valve.name !== start_node.name);
     // We are going to generate all possible combinations of the unopened
     // valves, but only half of them (rounded up) because we're going to
     // combine each of those combinations with the other half of the
     // original set of valves.
     let split_count = ~~(unopened.length / 2);
     let split_mod = unopened.length % 2;
-    splits = combinations(unopened, split_count + split_mod);
+    let splits = combinations(unopened, split_count + split_mod);
+    // We're going to combine each of the splits with the remaining unopened
+    splits = splits.map(split => [split, unopened.slice().filter(valve => !split.includes(valve))])
 
     // We're just going to dump the results of the combinations function into
     // an array and then sort it by value at the end to get the highest value.
-    let best_flow = [];
-
-    // We're going to compare all elements of the first group to all elements
-    // of the second group. If the two groups share any valves, then we're
-    // going to skip that combination. Otherwise, we're going to run the
-    // find_most_efficient_path function on each group and then add the
-    // results together to get the total flow for that combination.
+    const best_flow = new Array(splits.length).fill(0);
+    let best_flow_index = 0;
+    // Loop through each of the combinations and run the find_most_efficient_path
+    // function on each of the combinations.
     for (let i = 0; i < splits.length; i++) {
-
-        // create a new object that contains all the valves that the
-        // are not in the splits{1][i] object
-        let temp = unopened.slice();
-        for (let j = 0; j < splits[i].length; j++) {
-            let index = temp.findIndex((node) => node[0] === splits[i][j][1].name);
-            if (index > -1) {
-                temp.splice(index, 1);
-            }
-        }
-
         // Run the find_most_efficient_path function on each group and
         // then add the results together to get the total flow for that
-        // combination. We're using the spread operator to convert the
-        // array of node objects into a Map object. Maybe it's something
-        // that I'm doing wrong, but it seems that it's faster than just
-        // passing the array of node objects directly. Also, we are
-        // doing the Map conversions here instead of in the previous
-        // loop because it seems to be faster to do it here. Probably
-        // because we're not doing it for every possible combination.
-        best_flow.push(
+        // combination.
+        best_flow[best_flow_index++] = (
             find_most_efficient_path(
-                new Map([...splits[i], [start, start_node]]), start, rounds
+                splits[i][0]
             )
             + find_most_efficient_path(
-                new Map([...temp, [start, start_node]]), start, rounds
+                splits[i][1]
             )
         );
     }
@@ -92,105 +71,93 @@ function find_best_multiple_paths(valves, start, rounds) {
 // times, it's important to keep it as fast as possible. I've tried many ways
 // to optimize it, and this is the best that I've come up with so far.
 // ----------------------------------------------------------------------------
-function find_most_efficient_path(valves, start, rounds) {
+function find_most_efficient_path(valves) {
     let queue = new Queue();
     queue.enqueue({
-        node: valves.get(start),
-        visited: [],
-        calculated: {
-            steps: 0,
-            flow_rate: 0,
-            flow: 0,
-            total_flow: 0
-        }
+        node: start_node,
+        visited: [],        
+        steps: 0,
+        flow_rate: 0,
+        flow: 0,
+        total_flow: 0,
+        priority: 0
     });
 
-    let winner = queue.peek();
+    const winner = queue.peek();
     while (!queue.isEmpty) {
-        let current = queue.dequeue();
-
+        const current = queue.dequeue();
+        const curr_visited = current.visited;
+        
         // Using a visited array on the current node object because we want
         // each branch to track its own visited nodes. We want to be able to
         // visit the same node multiple times if it's on different branches.
-        current.visited.push(current.node.name)
+        curr_visited.push(current.node.name)
 
         // Just a simple if statement to check if we are on the winning node.
-        if (current.calculated.total_flow > winner.calculated.total_flow)
-            winner = current;
+        if (current.total_flow > winner.total_flow) {
+            winner.visited = curr_visited;
+            winner.node = current.node;
+            winner.steps = current.steps;
+            winner.flow_rate = current.flow_rate;
+            winner.flow = current.flow;
+            winner.total_flow = current.total_flow;
+            winner.priority = current.priority;
+        }
 
-        for (let [_, edge] of valves) {
-            // Just a few guard clauses to make sure that we don't actually
-            // push any nodes onto the stack that we don't want to visit.
-            // We don't want to visit a node that we've already visited,
-            // we don't want to visit the same node that we're currently on,
+        for (const edge of valves) {
+            // Skip the edge if it's the current node
+            if (edge.name === current.node.name) continue;
+            const edge_name = edge.name;
+            const edge_obj = current.node.edges[edge_name];
+            const steps = current.steps + edge_obj.steps;
+           
+            // We don't want to visit a node that we've already visited
             // and we don't want to visit a node that is outside of the
             // number of rounds that we're allowed to visit.
-            if (current.visited.includes(edge.name)
-                || current.node.name === edge.name
-                || current.calculated.steps + current.node.edges[edge.name] > rounds
-            ) continue;
+            if (curr_visited.includes(edge_name) || steps > rounds) continue;
 
-            // We're going to create a new object for the new calculated
-            // values so that we don't accidentally overwrite the values
-            // for the current node.
-            let new_calculated = {};
-            new_calculated.steps =
-                current.calculated.steps + current.node.edges[edge.name];
+            // Start by calculating the flow for the current node by multiplying
+            // the flow rate by the number of steps that we've taken since the
+            // last valve and then adding that with the flow from the previous
+            // node.
+            const flow = (current.flow_rate * edge_obj.steps) + current.flow;
 
-            // Make the calculations for the node we are about to push onto
-            // the stack, so we can do one last check to see if we should
-            // actually push it onto the stack or kill the branch.
-            new_calculated = calc_flow(current, edge, rounds, new_calculated);
+            // Increment the flow rate by the rate of the current node.. AFTER
+            // we've calculated the flow between the last valve and the current
+            // node.
+            const flow_rate = current.flow_rate + edge.rate;
+
+            // Calculate the total flow we would have for the remaining rounds
+            // if we were to stop at this node. This is the final weight that
+            // we will use to compare and determine winners.
+            const total_flow = flow_rate * (rounds - steps) + flow
+            
+            const priority = (current.total_flow + total_flow) - (edge_obj.flow * (rounds / valves.length) / 1.4)
 
             // Kill the branch if the total flow is less than the current
             // winner and the number of steps is greater than the number of
             // steps for the current winner. This is a pretty big optimization
             // that I kind of stumbled upon while I was trying to optimize
             // the runtime of this function.
-            if (new_calculated.total_flow < winner.calculated.total_flow
-                && new_calculated.steps >= winner.calculated.steps)
-                continue;
+            if (priority <= winner.priority)
+                break;
+
 
             // Push the node onto the stack. Make sure to pass the visited
             // array by value, not by reference. Otherwise, we'll end up
             // with a bunch of nodes that have the same visited array.
-            // I originally used lodash cloneDeep to do this, but it was
-            // VERY slow in comparison to just using the slice method.
             queue.enqueue({
                 node: edge,
-                visited: current.visited.slice(),
-                calculated: new_calculated
+                visited: curr_visited.slice(),
+                flow_rate,
+                flow,
+                steps,
+                total_flow,
+                priority
             });
         }
     }
-    return winner.calculated.total_flow
-}
-
-// Magic calculation stuff that took me way too long to get right because
-// I had a case of the dumb when I was trying to figure out how to do it.
-function calc_flow(current, edge, rounds, new_calculated) {
-    // Start by calculating the flow for the current node by multiplying
-    // the flow rate by the number of steps that we've taken since the
-    // last valve and then adding that with the flow from the previous
-    // node.
-    new_calculated.flow =
-        (current.calculated.flow_rate * current.node.edges[edge.name])
-        + current.calculated.flow;
-
-    // Increment the flow rate by the rate of the current node.. AFTER
-    // we've calculated the flow between the last valve and the current
-    // node.
-    new_calculated.flow_rate = current.calculated.flow_rate + edge.rate;
-
-    // Calculate the total flow we would have for the remaining rounds
-    // if we were to stop at this node. This is the final weight that
-    // we will use to compare and determine winners.
-    new_calculated.total_flow =
-        (new_calculated.flow_rate
-            * (rounds - new_calculated.steps)
-        ) + new_calculated.flow;
-
-    return new_calculated;
+    return winner.total_flow
 }
 
 // ----------------------------------------------------------------------------
@@ -234,13 +201,24 @@ function generate_valves_map(input) {
     // Generate the shortest paths from each node to all other nodes
     for (let valve of valves) {
         let paths = generate_shortest_paths(valves, valve[0]);
-        valve[1].edges = paths
+        valve[1].edges = paths;
         valve[1].name = valve[0];
     }
 
     // Remove the valves that don't have any rate since they dont matter
-    valves = new Map([...valves]
-        .filter(valve => valve[1].rate > 0 || valve[1].name === 'AA'));
+    valves = valves
+        .filter(valve => valve[1].rate > 0 || valve[1].name === 'AA')
+        .map(valve => valve[1])
+        .map((valve) => {
+            valve.edges = [...Object.entries(valve.edges)].map(edge => { 
+                edge[1].flow = valve.rate * edge[1].steps;
+                return edge;
+            }).sort((a, b) => b[1].weight - a[1].weight);
+            valve.edges = Object.fromEntries(valve.edges);
+            valve.max_weight = valve.edges[Object.keys(valve.edges)[0]].weight;
+            return valve;
+        })
+    valves = valves.sort((a, b) => b.max_weight - a.max_weight);
     return valves
 }
 
@@ -267,7 +245,12 @@ function generate_shortest_paths(valves, start) {
             // If we found the end valve, we can stop the BFS and backtrace the
             // path.
             if (curr_tunnels.includes(valve[0])) {
-                paths[valve[0]] = backtrace_path(path, curr_valve, valve[0]);
+                const path_length = backtrace_path(path, curr_valve, valve[0]);
+                paths[valve[0]] = {
+                    name: valve[0],
+                    steps: path_length,
+                    weight: valve[1].rate / path_length
+                }
                 break;
             }
 
@@ -278,7 +261,7 @@ function generate_shortest_paths(valves, start) {
                 path.push([tunnel, curr_valve]);
                 queue.enqueue(tunnel);
             }
-
+            
             visited.push(curr_valve);
         }
     }
@@ -325,7 +308,7 @@ console.log(`Starting to solve Part 1 at ${new Date().toLocaleTimeString()}`)
 // ============================================================================
 
 // Actually solve part 1
-let most_efficient_path = find_most_efficient_path(valves, start, rounds);
+let most_efficient_path = find_most_efficient_path(valves.filter(valve => valve.name !== start_node.name));
 console.log(`Part 1 solution: ${most_efficient_path}`)
 
 // ============================================================================
@@ -345,7 +328,7 @@ console.log(`Starting to solve Part 2 at ${new Date().toLocaleTimeString()}`)
 
 // Actually solve part 2
 rounds = 26;
-let best_multiple_paths = find_best_multiple_paths(valves, start, rounds)
+let best_multiple_paths = find_best_multiple_paths(valves, start_node, rounds)
 console.log(`Part 2 solution: ${best_multiple_paths}`)
 // Best time so far: 8,8s
 
